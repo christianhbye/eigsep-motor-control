@@ -7,12 +7,14 @@ class Motor:
         self.motor = QwiicScmd()
         begin = self.motor.begin()
         assert begin, "Initalization of SCMD failed"
+        assert begin, "Initalization of SCMD failed"
         for i in range(n_motors):
             self.motor.set_drive(i, 0, 0)
         self.motor.enable()
-
+ 
         self.encoder = QwiicDualEncoderReader()
         self.encoder.begin()
+
 
     def start(self, motor_id, speed, distance):
         """
@@ -30,19 +32,49 @@ class Motor:
         
         distance = abs(distance) if speed > 0 else -1*abs(distance)
         
-        speed = abs(speed)
+        velocity = abs(speed)
         
         if distance != float('inf'):
-            original = get_encoder(motor_id)
-            destination = original+distance
+            original = self.get_encoder(motor_id)%32768
+            destination = (original-distance)%32768
         else:
+            original = self.get_encoder(motor_id)%32768
             destination = distance
         
-        self.motor.set_drive(motor_id, direction, speed)
+        overflow = 0
+        if original-distance > 32768:
+            overflow = 1
+        elif original-distance < 0:
+            overflow = 1
+        else:
+            overflow = 0        
+
+        self.motor.set_drive(motor_id, direction, velocity)
         
-        while(get_encoder(motor_id) != destination):
+        
+        while overflow == 1:
+            if speed < 0:
+                if self.get_encoder(motor_id)%32768 < destination:
+                    overflow = 0
+            elif speed > 0:
+                if self.get_encoder(motor_id)%32768 > destination:
+                    overflow = 0
+            else:
+                break
+
+        while(self.get_encoder(motor_id) != destination):
+
+            print(self.get_encoder(motor_id)%32768, destination)
+            if speed < 0:
+                if self.get_encoder(motor_id)%32768 >= destination:
+                    break
+            elif speed > 0:
+                if self.get_encoder(motor_id)%32768 <= destination:
+                    break
+            else:
+                break
             
-        stop(motor_id)
+        self.stop(motor_id)
                 
             
 
