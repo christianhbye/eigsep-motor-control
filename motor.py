@@ -14,7 +14,7 @@ class Motor:
         self.encoder = QwiicDualEncoderReader()
         self.encoder.begin()
 
-    def start(self, motor_id, speed):
+    def start(self, motor_id, speed, distance):
         """
         Start the motor with the given speed.
 
@@ -26,9 +26,25 @@ class Motor:
             The speed to start the motor at. Positive values are forward,
             negative values are backward. Must be between -255 and 255.
         """
-        direction = int(speed < 0)  # fwd = 0, bwd = 1
+        direction = 1 if speed > 0 else 0
+        
+        distance = abs(distance) if speed > 0 else -1*abs(distance)
+        
         speed = abs(speed)
+        
+        if distance != float('inf'):
+            original = get_encoder(motor_id)
+            destination = original+distance
+        else:
+            destination = distance
+        
         self.motor.set_drive(motor_id, direction, speed)
+        
+        while(get_encoder(motor_id) != destination):
+            
+        stop(motor_id)
+                
+            
 
     def stop(self, motor_id):
         self.motor.set_drive(motor_id, 0, 0)
