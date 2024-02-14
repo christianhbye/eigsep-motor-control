@@ -1,6 +1,7 @@
 from qwiic_dual_encoder_reader import QwiicDualEncoderReader
 from qwiic_scmd import QwiicScmd
-
+import serial
+import time
 
 class Motor:
     def __init__(self, n_motors=2):
@@ -16,7 +17,7 @@ class Motor:
         self.encoder.begin()
 
 
-    def start(self, motor_id, speed, distance):
+    def start(self, motor_id, velocity, distance):
         """
         Start the motor with the given speed.
 
@@ -28,11 +29,11 @@ class Motor:
             The speed to start the motor at. Positive values are forward,
             negative values are backward. Must be between -255 and 255.
         """
-        direction = 1 if speed > 0 else 0
+        direction = 1 if velocity > 0 else 0
         
-        distance = abs(distance) if speed > 0 else -1*abs(distance)
+        distance = abs(distance) if velocity > 0 else -1*abs(distance)
         
-        velocity = abs(speed)
+        speed = abs(velocity)
         
         if distance != float('inf'):
             original = self.get_encoder(motor_id)%32768
@@ -49,8 +50,10 @@ class Motor:
         else:
             overflow = 0        
 
-        self.motor.set_drive(motor_id, direction, velocity)
+        self.motor.set_drive(motor_id, direction, speed)
         
+        if distance == float('inf'):
+            return
         
         while overflow == 1:
             if speed < 0:
@@ -65,10 +68,10 @@ class Motor:
         while(self.get_encoder(motor_id) != destination):
 
             print(self.get_encoder(motor_id)%32768, destination)
-            if speed < 0:
+            if velocity < 0:
                 if self.get_encoder(motor_id)%32768 >= destination:
                     break
-            elif speed > 0:
+            elif velocity > 0:
                 if self.get_encoder(motor_id)%32768 <= destination:
                     break
             else:
@@ -88,3 +91,38 @@ class Motor:
             return self.encoder.count2
         else:
             raise KeyError("Invalid motor id.")
+    
+    def serial_connect(self, port, operator, threshold, motor_id, speed):
+        baudrate = 921600
+        #port for 1st pico is "/dev/ttyACM0"
+        ser = serial.Serial(port, baudrate)
+
+        ser.dtr = False
+        time.sleep(1)
+        ser.dtr = True
+
+        analog_value=0
+
+        while True:
+            self.start(motor_id, speed, float('inf'))
+            if ser.in_waiting:
+                analog_str = ser.readline().decode('utf-8').strip()
+                analog_value = int(analog_str)
+                volt_value = (3.3/65535)*analog_value
+                print("Analog Value: ", analog_value, " Voltage Value: ", volt_value)
+                if operator == 'higher':
+                    if analog_value >= threshold:
+                        self.stop(motor_id)
+                        print('Done!')
+                        break
+                elif operator == 'lower':
+                    if analog_value <= threshold:
+                        self.stop(motor_id)
+                        print('Done!')
+                        break
+                else:
+                    print('Invalid operator.')
+                    break
+
+        #port = "/dev/ttyACM0"
+        #serial_connect(port, 'higher', 50000)
