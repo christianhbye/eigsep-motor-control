@@ -38,11 +38,11 @@ class Motor:
         if distance != float('inf'):
             original = self.get_encoder(motor_id)%32768
             destination = (original-distance)%32768
-            self.motor.set_drive(motor_id, direction, speed)
-            return
         else:
             original = self.get_encoder(motor_id)%32768
             destination = distance
+            self.motor.set_drive(motor_id, direction, speed)
+            return
         
         overflow = 0
         if original-distance > 32768:
