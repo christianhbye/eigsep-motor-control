@@ -123,8 +123,9 @@ class Motor:
 
         analog_value=0
 
+        self.start(motor_id, speed, float('inf'))
         while True:
-            self.start(motor_id, speed, float('inf'))
+            
             if ser.in_waiting:
                 analog_str = ser.readline().decode('utf-8').strip()
                 analog_value = int(analog_str)
