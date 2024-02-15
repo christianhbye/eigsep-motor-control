@@ -38,6 +38,8 @@ class Motor:
         if distance != float('inf'):
             original = self.get_encoder(motor_id)%32768
             destination = (original-distance)%32768
+            self.motor.set_drive(motor_id, direction, speed)
+            return
         else:
             original = self.get_encoder(motor_id)%32768
             destination = distance
@@ -52,10 +54,8 @@ class Motor:
 
         self.motor.set_drive(motor_id, direction, speed)
         
-        if distance == float('inf'):
-            return
-        
         while overflow == 1:
+            print(self.get_encoder(motor_id)%32768, destination)
             if speed < 0:
                 if self.get_encoder(motor_id)%32768 < destination:
                     overflow = 0
@@ -66,7 +66,6 @@ class Motor:
                 break
 
         while(self.get_encoder(motor_id) != destination):
-
             print(self.get_encoder(motor_id)%32768, destination)
             if velocity < 0:
                 if self.get_encoder(motor_id)%32768 >= destination:
@@ -92,13 +91,34 @@ class Motor:
         else:
             raise KeyError("Invalid motor id.")
     
-    def serial_connect(self, port, operator, threshold, motor_id, speed):
+    def serial_read(self, port):
         baudrate = 921600
         #port for 1st pico is "/dev/ttyACM0"
         ser = serial.Serial(port, baudrate)
 
         ser.dtr = False
-        time.sleep(1)
+        time.sleep(0.5)
+        ser.dtr = True
+
+        analog_value=0
+
+        while True:
+            if ser.in_waiting:
+                analog_str = ser.readline().decode('utf-8').strip()
+                analog_value = int(analog_str)
+                volt_value = (3.3/65535)*analog_value
+                print("Analog Value: ", analog_value, " Voltage Value: ", volt_value)
+
+        #port = "/dev/ttyACM0"
+        #serial_connect(port, 'higher', 50000)
+
+    def serial_motor_control(self, port, operator, threshold, motor_id, speed):
+        baudrate = 921600
+        #port for 1st pico is "/dev/ttyACM0"
+        ser = serial.Serial(port, baudrate)
+
+        ser.dtr = False
+        time.sleep(0.5)
         ser.dtr = True
 
         analog_value=0
@@ -110,19 +130,24 @@ class Motor:
                 analog_value = int(analog_str)
                 volt_value = (3.3/65535)*analog_value
                 print("Analog Value: ", analog_value, " Voltage Value: ", volt_value)
+                if analog_value>58000:
+                    print('Reached max.')
+                    break
+                if analog_value <1000:
+                    print('Reached min.')
+                    break
                 if operator == 'higher':
-                    if analog_value >= threshold:
-                        self.stop(motor_id)
-                        print('Done!')
+                    if analog_value >= threshold: 
+                        print ('Reached target.')
                         break
                 elif operator == 'lower':
                     if analog_value <= threshold:
-                        self.stop(motor_id)
-                        print('Done!')
+                        print('Reached target')
                         break
                 else:
                     print('Invalid operator.')
                     break
-
+                self.stop(motor_id)
+                print('Done!')
         #port = "/dev/ttyACM0"
-        #serial_connect(port, 'higher', 50000)
+        #serial_connect(port, 'higher', 50000, 0, -255)
