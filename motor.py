@@ -123,7 +123,9 @@ class Motor:
 
         analog_value=0
 
-        self.start(motor_id, speed, float('inf'))
+        direction = 1 if speed > 0 else 0
+
+        self.motor.set_drive(motor_id, direction, abs(speed))
         while True:
             
             if ser.in_waiting:
