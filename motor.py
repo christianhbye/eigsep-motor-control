@@ -55,7 +55,7 @@ class Motor:
         self.motor.set_drive(motor_id, direction, speed)
         
         while overflow == 1:
-            print(self.get_encoder(motor_id)%32768, destination)
+            #print(self.get_encoder(motor_id)%32768, destination)
             if speed < 0:
                 if self.get_encoder(motor_id)%32768 < destination:
                     overflow = 0
@@ -134,7 +134,7 @@ class Motor:
                 if analog_value>58000:
                     print('Reached max.')
                     break
-                if analog_value <1000:
+                if analog_value<1000:
                     print('Reached min.')
                     break
                 if operator == 'higher':
