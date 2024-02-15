@@ -134,11 +134,13 @@ class Motor:
                 volt_value = (3.3/65535)*analog_value
                 print("Analog Value: ", analog_value, " Voltage Value: ", volt_value)
                 if analog_value>58000:
-                    print('Reached max.')
-                    break
+                    if direction == 0:
+                        print('Reached max.')
+                        break
                 if analog_value<1000:
-                    print('Reached min.')
-                    break
+                    if direction == 1:
+                        print('Reached min.')
+                        break
                 if operator == 'higher':
                     if analog_value >= threshold: 
                         print ('Reached target.')
