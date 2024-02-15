@@ -147,7 +147,7 @@ class Motor:
                 else:
                     print('Invalid operator.')
                     break
-                self.stop(motor_id)
-                print('Done!')
+        self.stop(motor_id)
+        print('Done!')
         #port = "/dev/ttyACM0"
         #serial_connect(port, 'higher', 50000, 0, -255)
