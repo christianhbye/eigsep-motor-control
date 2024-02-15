@@ -149,8 +149,27 @@ class Motor:
                         break
                 else:
                     print('Invalid operator.')
-                    break
+                    self.stop(motor_id)
+                    return
         self.stop(motor_id)
+        
+        if abs(analog_value-threshold) >= 100:
+            if threshold>58000:
+                threshold = 58000
+            elif threshold<1000:
+                threshold = 1000
+            print('Correcting error.')
+            direction = 1 if direction == 0 else 0
+            self.motor.set_drive(motor_id, direction, 100)
+            while True:
+                if operator == 'higher':
+                    if analog_value >= threshold: 
+                        print ('Reached target.')
+                        break
+                elif operator == 'lower':
+                    if analog_value <= threshold:
+                        print('Reached target')
+                        break
         print('Done!')
         #port = "/dev/ttyACM0"
         #serial_connect(port, 'higher', 50000, 0, -255)
