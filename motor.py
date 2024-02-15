@@ -118,6 +118,7 @@ class Motor:
             speed = -1*abs(speed)
         elif operator == 'lower':
             speed = abs(speed)
+            speed = 254 if speed == 255 else speed
         else:
             print('Invalid operator')
             return
@@ -156,7 +157,7 @@ class Motor:
                         break
         self.stop(motor_id)
         
-        if abs(analog_value-threshold) >= 100:
+        if abs(analog_value-threshold) >= 50:
             print('Correcting error.')
             direction = 1 if direction == 0 else 0
             self.motor.set_drive(motor_id, direction, 100)
