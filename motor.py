@@ -113,6 +113,21 @@ class Motor:
         #serial_connect(port, 'higher', 50000)
 
     def serial_motor_control(self, port, operator, threshold, motor_id, speed):
+        print('Aligning operator and direction')
+        if operator == 'higher':
+            speed = -1*abs(speed)
+        elif operator == 'lower':
+            speed = abs(speed)
+        else:
+            print('Invalid operator')
+            return
+        direction = 1 if speed > 0 else 0
+        
+        if threshold>58000:
+            threshold = 58000
+        elif threshold<1000:
+            threshold = 1000
+        
         baudrate = 921600
         #port for 1st pico is "/dev/ttyACM0"
         ser = serial.Serial(port, baudrate)
@@ -123,11 +138,9 @@ class Motor:
 
         analog_value=0
 
-        direction = 1 if speed > 0 else 0
-
         self.motor.set_drive(motor_id, direction, abs(speed))
+        print('Attempting to reach ', threshold)
         while True:
-            
             if ser.in_waiting:
                 analog_str = ser.readline().decode('utf-8').strip()
                 analog_value = int(analog_str)
@@ -141,17 +154,9 @@ class Motor:
                     if analog_value <= threshold:
                         print('Reached target')
                         break
-                else:
-                    print('Invalid operator.')
-                    self.stop(motor_id)
-                    return
         self.stop(motor_id)
         
         if abs(analog_value-threshold) >= 100:
-            if threshold>58000:
-                threshold = 58000
-            elif threshold<1000:
-                threshold = 1000
             print('Correcting error.')
             direction = 1 if direction == 0 else 0
             self.motor.set_drive(motor_id, direction, 100)
@@ -164,6 +169,8 @@ class Motor:
                     if analog_value <= threshold:
                         print('Reached target')
                         break
+        
+        self.stop(motor_id)
         print('Done!')
         #port = "/dev/ttyACM0"
         #serial_connect(port, 'higher', 50000, 0, -255)
