@@ -45,7 +45,7 @@ class Motor:
             return
         
         overflow = 0
-        if original-distance > 32768:
+        if original+abs(distance) > 32768:
             overflow = 1
         elif original-distance < 0:
             overflow = 1
