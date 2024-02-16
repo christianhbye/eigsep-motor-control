@@ -135,9 +135,9 @@ class Motor:
             threshold = 1000
         
         if analog_value > threshold:
-            direction = 0
-        elif analog_value < threshold:
             direction = 1
+        elif analog_value < threshold:
+            direction = 0
 
         speed = 254 if speed == 255 else speed
 
