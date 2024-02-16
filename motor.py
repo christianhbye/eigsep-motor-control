@@ -56,10 +56,10 @@ class Motor:
         
         while overflow == 1:
             #print(self.get_encoder(motor_id)%32768, destination)
-            if speed < 0:
+            if velocity < 0:
                 if self.get_encoder(motor_id)%32768 < destination:
                     overflow = 0
-            elif speed > 0:
+            elif velocity > 0:
                 if self.get_encoder(motor_id)%32768 > destination:
                     overflow = 0
             else:
