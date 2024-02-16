@@ -112,7 +112,7 @@ class Motor:
         #port = "/dev/ttyACM0"
         #serial_connect(port, 'higher', 50000)
 
-    def serial_motor_control(self, port, operator, threshold, motor_id, speed):
+    def serial_motor_control(self, port, threshold, motor_id, speed):
         baudrate = 921600
         #port for 1st pico is "/dev/ttyACM0"
         ser = serial.Serial(port, baudrate)
@@ -126,6 +126,12 @@ class Motor:
         if ser.in_waiting:
             analog_str = ser.readline().decode('utf-8').strip()
             analog_value = int(analog_str)
+        print(analog_value)
+        
+        if threshold>58000:
+            threshold = 58000
+        elif threshold<1000:
+            threshold = 1000
         
         if analog_value > threshold:
             direction = 0
@@ -133,11 +139,6 @@ class Motor:
             direction = 1
 
         speed = 254 if speed == 255 else speed
-        
-        if threshold>58000:
-            threshold = 58000
-        elif threshold<1000:
-            threshold = 1000
 
         self.motor.set_drive(motor_id, direction, abs(speed))
         print('Attempting to reach ', threshold)
@@ -162,11 +163,11 @@ class Motor:
             direction = 1 if direction == 0 else 0
             self.motor.set_drive(motor_id, direction, 100)
             while True:
-                if operator == 'higher':
+                if direction == 1:
                     if analog_value >= threshold: 
                         print ('Reached target.')
                         break
-                elif operator == 'lower':
+                elif direction == 0:
                     if analog_value <= threshold:
                         print('Reached target')
                         break
