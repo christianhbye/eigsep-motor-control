@@ -134,6 +134,10 @@ class Motor:
         elif threshold<1000:
             threshold = 1000
         
+        if abs(analog_value-threshold) <= 100:
+            print('Already at destination.')
+            return
+        
         if analog_value > threshold:
             direction = 1
         elif analog_value < threshold:
@@ -165,11 +169,11 @@ class Motor:
             self.motor.set_drive(motor_id, direction, 100)
             while True:
                 if direction == 1:
-                    if analog_value <= threshold: 
+                    if analog_value >= threshold: 
                         print ('Reached target.')
                         break
                 elif direction == 0:
-                    if analog_value >= threshold:
+                    if analog_value <= threshold:
                         print('Reached target')
                         break
         
