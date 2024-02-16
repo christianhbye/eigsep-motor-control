@@ -150,11 +150,11 @@ class Motor:
                 volt_value = (3.3/65535)*analog_value
                 print("Analog Value: ", analog_value, " Voltage Value: ", volt_value)
                 if direction == 0:
-                    if analog_value <= threshold: 
+                    if analog_value >= threshold: 
                         print ('Reached target.')
                         break
                 elif direction == 1:
-                    if analog_value >= threshold:
+                    if analog_value <= threshold:
                         print('Reached target')
                         break
         self.stop(motor_id)
@@ -165,11 +165,11 @@ class Motor:
             self.motor.set_drive(motor_id, direction, 100)
             while True:
                 if direction == 1:
-                    if analog_value >= threshold: 
+                    if analog_value <= threshold: 
                         print ('Reached target.')
                         break
                 elif direction == 0:
-                    if analog_value <= threshold:
+                    if analog_value >= threshold:
                         print('Reached target')
                         break
         
