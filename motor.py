@@ -113,22 +113,6 @@ class Motor:
         #serial_connect(port, 'higher', 50000)
 
     def serial_motor_control(self, port, operator, threshold, motor_id, speed):
-        print('Aligning operator and direction')
-        if operator == 'higher':
-            speed = -1*abs(speed)
-        elif operator == 'lower':
-            speed = abs(speed)
-            speed = 254 if speed == 255 else speed
-        else:
-            print('Invalid operator')
-            return
-        direction = 1 if speed > 0 else 0
-        
-        if threshold>58000:
-            threshold = 58000
-        elif threshold<1000:
-            threshold = 1000
-        
         baudrate = 921600
         #port for 1st pico is "/dev/ttyACM0"
         ser = serial.Serial(port, baudrate)
@@ -138,6 +122,22 @@ class Motor:
         ser.dtr = True
 
         analog_value=0
+        
+        if ser.in_waiting:
+            analog_str = ser.readline().decode('utf-8').strip()
+            analog_value = int(analog_str)
+        
+        if analog_value > threshold:
+            direction = 0
+        elif analog_value < threshold:
+            direction = 1
+
+        speed = 254 if speed == 255 else speed
+        
+        if threshold>58000:
+            threshold = 58000
+        elif threshold<1000:
+            threshold = 1000
 
         self.motor.set_drive(motor_id, direction, abs(speed))
         print('Attempting to reach ', threshold)
@@ -147,11 +147,11 @@ class Motor:
                 analog_value = int(analog_str)
                 volt_value = (3.3/65535)*analog_value
                 print("Analog Value: ", analog_value, " Voltage Value: ", volt_value)
-                if operator == 'higher':
+                if direction == 0:
                     if analog_value >= threshold: 
                         print ('Reached target.')
                         break
-                elif operator == 'lower':
+                elif direction == 1:
                     if analog_value <= threshold:
                         print('Reached target')
                         break
