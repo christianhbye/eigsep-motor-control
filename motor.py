@@ -32,7 +32,7 @@ class Motor:
         direction = 1 if velocity > 0 else 0
         
         distance = abs(distance) if velocity > 0 else -1*abs(distance)
-        
+        velocity = 254 if velocity == 255 else velocity
         speed = abs(velocity)
         
         if distance != float('inf'):
@@ -156,7 +156,7 @@ class Motor:
                         print('Reached target')
                         break
         self.stop(motor_id)
-        
+        time.sleep(0.5)
         if abs(analog_value-threshold) >= 50:
             print('Correcting error.')
             direction = 1 if direction == 0 else 0
