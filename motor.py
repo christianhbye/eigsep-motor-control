@@ -120,6 +120,7 @@ class Motor:
         ser.dtr = False
         time.sleep(0.5)
         ser.dtr = True
+        time.sleep(0.5)
 
         analog_value=0
         
@@ -149,11 +150,11 @@ class Motor:
                 volt_value = (3.3/65535)*analog_value
                 print("Analog Value: ", analog_value, " Voltage Value: ", volt_value)
                 if direction == 0:
-                    if analog_value >= threshold: 
+                    if analog_value <= threshold: 
                         print ('Reached target.')
                         break
                 elif direction == 1:
-                    if analog_value <= threshold:
+                    if analog_value >= threshold:
                         print('Reached target')
                         break
         self.stop(motor_id)
