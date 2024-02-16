@@ -168,15 +168,19 @@ class Motor:
             direction = 1 if direction == 0 else 0
             self.motor.set_drive(motor_id, direction, 100)
             while True:
-                if direction == 1:
-                    if analog_value >= threshold: 
-                        print ('Reached target.')
-                        break
-                elif direction == 0:
-                    if analog_value <= threshold:
-                        print('Reached target')
-                        break
-        
+                if ser.in_waiting:
+                    analog_str = ser.readline().decode('utf-8').strip()
+                    analog_value = int(analog_str)
+                    volt_value = (3.3/65535)*analog_value
+                    print("Analog Value: ", analog_value, " Voltage Value: ", volt_value)
+                    if direction == 1:
+                        if analog_value <= threshold: 
+                            print ('Reached target.')
+                            break
+                    elif direction == 0:
+                        if analog_value >= threshold:
+                            print('Reached target')
+                            break                
         self.stop(motor_id)
         print('Done!')
         #port = "/dev/ttyACM0"
