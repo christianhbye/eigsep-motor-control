@@ -39,8 +39,6 @@ class Motor:
             original = self.get_encoder(motor_id)%32768
             destination = (original-distance)%32768
         else:
-            original = self.get_encoder(motor_id)%32768
-            destination = distance
             self.motor.set_drive(motor_id, direction, speed)
             return
         
