@@ -161,8 +161,8 @@ class Motor:
         elif analog_value_1 < threshold_1:
             direction_1 = 0
 
-        speed_0 = 254 if speed_0 == 255 else speed_0
-        speed_1 = 254 if speed_1 == 255 else speed_1
+        speed_0 = 254 if abs(speed_0) == 255 else speed_0
+        speed_1 = 254 if abs(speed_1) == 255 else speed_1
 
         reached_0 = False
         reached_1 = False
