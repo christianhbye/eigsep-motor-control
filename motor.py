@@ -104,6 +104,7 @@ class Motor:
         while True:
             if ser.in_waiting:
                 analog_string = ser.readline().decode('utf-8').strip()
+                print(analog_string)
                 a,b = analog_string().split()
                 analog_value_0 = int(a)
                 analog_value_1 = int(b)
