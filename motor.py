@@ -89,9 +89,10 @@ class Motor:
         else:
             raise KeyError("Invalid motor id.")
     
-    def serial_read(self, port):
+    def serial_read(self):
         baudrate = 921600
         #port for 1st pico is "/dev/ttyACM0"
+        port = "/dev/ttyACM0"
         ser = serial.Serial(port, baudrate)
 
         ser.dtr = False
@@ -103,83 +104,141 @@ class Motor:
         while True:
             if ser.in_waiting:
                 analog_str = ser.readline().decode('utf-8').strip()
-                analog_value = int(analog_str)
-                volt_value = (3.3/65535)*analog_value
-                print("Analog Value: ", analog_value, " Voltage Value: ", volt_value)
-
+                a,b = analog_str().split()
+                analog_value_0 = int(a)
+                analog_value_1 = int(b)
+                volt_value_0 = (3.3/65535)*analog_value_0
+                volt_value_1 = (3.3/65535)*analog_value_1
+                print("Analog Value 0: ", analog_value_0, " Voltage Value 0: ", volt_value_0, "  Analog Value 1: ", analog_value_1, " Voltage Value 1: ", volt_value_1)
         #port = "/dev/ttyACM0"
         #serial_connect(port, 'higher', 50000)
 
-    def serial_motor_control(self, port, threshold, motor_id, speed):
+    def serial_motor_control(self, threshold_0, threshold_1, speed_0, speed_1):
+        print('Attempting to reach ', threshold_0, 'for threshold 0 and ', threshold_1, 'for threshold 1.')
         baudrate = 921600
         #port for 1st pico is "/dev/ttyACM0"
+        port = "/dev/ttyACM0"
         ser = serial.Serial(port, baudrate)
 
         ser.dtr = False
         time.sleep(0.5)
         ser.dtr = True
-        time.sleep(0.5)
+        time.sleep(0.75)
 
-        analog_value=0
+        analog_value_0=0
+        analog_value_1=0
         
         if ser.in_waiting:
             analog_str = ser.readline().decode('utf-8').strip()
-            analog_value = int(analog_str)
-        print(analog_value)
+            a,b = analog_str().split()
+            analog_value_0 = int(a)
+            analog_value_1 = int(b)
+        print(analog_value_0, analog_value_1)
         
-        if threshold>58000:
-            threshold = 58000
-        elif threshold<1000:
-            threshold = 1000
+        if threshold_0 > 52000:
+            threshold_0 = 52000
+        elif threshold_0 < 1000:
+            threshold_0 = 1000
         
-        if abs(analog_value-threshold) <= 100:
-            print('Already at destination.')
+        if threshold_1 > 52000:
+            threshold_1 = 52000
+        elif threshold_1 < 1000:
+            threshold_1 = 1000
+        
+        if abs(analog_value_0-threshold_0) <= 100:
+            print('Already at destination 0.')
+            return
+        if abs(analog_value_1-threshold_1) <= 100:
+            print('Already at destination 1.')
             return
         
-        if analog_value > threshold:
-            direction = 1
-        elif analog_value < threshold:
-            direction = 0
+        if analog_value_0 > threshold_0:
+            direction_0 = 1
+        elif analog_value_0 < threshold_0:
+            direction_0 = 0
+        if analog_value_1 > threshold_1:
+            direction_1 = 1
+        elif analog_value_1 < threshold_1:
+            direction_1 = 0
 
-        speed = 254 if speed == 255 else speed
+        speed_0 = 254 if speed_0 == 255 else speed_0
+        speed_1 = 254 if speed_1 == 255 else speed_1
 
-        self.motor.set_drive(motor_id, direction, abs(speed))
-        print('Attempting to reach ', threshold)
+        reached_0 = False
+        reached_1 = False
+
+        self.motor.set_drive(0, direction_0, abs(speed_0))
+        self.motor.set_drive(1, direction_1, abs(speed_1))
         while True:
             if ser.in_waiting:
                 analog_str = ser.readline().decode('utf-8').strip()
-                analog_value = int(analog_str)
-                volt_value = (3.3/65535)*analog_value
-                print("Analog Value: ", analog_value, " Voltage Value: ", volt_value)
-                if direction == 0:
-                    if analog_value >= threshold: 
-                        print ('Reached target.')
-                        break
-                elif direction == 1:
-                    if analog_value <= threshold:
-                        print('Reached target')
-                        break
-        self.stop(motor_id)
+                a,b = analog_str().split()
+                analog_value_0 = int(a)
+                analog_value_1 = int(b)
+                volt_value_0 = (3.3/65535)*analog_value_0
+                volt_value_1 = (3.3/65535)*analog_value_1
+                print("Analog Value 0: ", analog_value_0, " Voltage Value 0: ", volt_value_0, "  Analog Value 1: ", analog_value_1, " Voltage Value 1: ", volt_value_1)
+                if direction_0 == 0:
+                    if analog_value_0 >= threshold_0: 
+                        print ('Reached target 0.')
+                        self.motor.stop(0)
+                        reached_0 = True
+                        #break
+                elif direction_0 == 1:
+                    if analog_value_0 <= threshold_0:
+                        print('Reached target 0.')
+                        self.motor.stop(0)
+                        reached_0 = True
+                        #break
+                if direction_1 == 0:
+                    if analog_value_1 >= threshold_1: 
+                        print ('Reached target 1.')
+                        self.motor.stop(1)
+                        reached_1 = True
+                        #break
+                elif direction_0 == 1:
+                    if analog_value_1 <= threshold_1:
+                        print('Reached target 1.')
+                        self.motor.stop(1)
+                        reached_1 = True
+                        #break
+                if reached_0 == True and reached_1 == True:
+                    break
+        #self.stop(motor_id)
         time.sleep(0.5)
-        if abs(analog_value-threshold) >= 50:
+        if abs(analog_value_0-threshold_0) >= 50 or abs(analog_value_1-threshold_1) >= 50:
             print('Correcting error.')
-            direction = 1 if direction == 0 else 0
-            self.motor.set_drive(motor_id, direction, 100)
+            direction_0 = 1 if direction_0 == 0 else 0
+            direction_0 = 1 if direction_0 == 0 else 0
+
+            self.motor.set_drive(0, direction_0, 100)
             while True:
                 if ser.in_waiting:
                     analog_str = ser.readline().decode('utf-8').strip()
-                    analog_value = int(analog_str)
-                    volt_value = (3.3/65535)*analog_value
-                    print("Analog Value: ", analog_value, " Voltage Value: ", volt_value)
-                    if direction == 1:
-                        if analog_value <= threshold: 
-                            print ('Reached target.')
+                    a,b = analog_str().split()
+                    analog_value_0 = int(a)
+                    analog_value_1 = int(b)
+                    volt_value_0 = (3.3/65535)*analog_value_0
+                    volt_value_1 = (3.3/65535)*analog_value_1
+                    print("Analog Value 0: ", analog_value_0, " Voltage Value 0: ", volt_value_0, "  Analog Value 1: ", analog_value_1, " Voltage Value 1: ", volt_value_1)
+                    if direction_0 == 1:
+                        if analog_value_0 <= threshold_0: 
+                            print ('Reached target 0.')
                             break
-                    elif direction == 0:
-                        if analog_value >= threshold:
-                            print('Reached target')
-                            break                
-        self.stop(motor_id)
+                    elif direction_0 == 0:
+                        if analog_value_0 >= threshold_0:
+                            print('Reached target 0.')
+                            break  
+                    if direction_1 == 1:
+                        if analog_value_1 <= threshold_1: 
+                            print ('Reached target 1.')
+                            break
+                    elif direction_1 == 0:
+                        if analog_value_1 >= threshold_1:
+                            print('Reached target 1.')
+                            break              
+        self.stop(0)
+        self.stop(1)
         print('Done!')
         #port = "/dev/ttyACM0"
         #serial_connect(port, 'higher', 50000, 0, -255)
