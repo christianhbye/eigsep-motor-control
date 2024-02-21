@@ -129,11 +129,17 @@ class Motor:
         analog_value_0=0
         analog_value_1=0
         
-        if ser.in_waiting:
-            analog_str = ser.readline().decode('utf-8').strip()
-            a,b = analog_str.split()
-            analog_value_0 = int(a)
-            analog_value_1 = int(b)
+        while True:
+            if ser.in_waiting:
+                analog_str = ser.readline().decode('utf-8').strip()
+                try:
+                    a, b = analog_str.split()
+                    analog_value_0 = int(a)
+                    analog_value_1 = int(b)
+                    break
+                except ValueError:
+                    print("Incomplete data received, trying again...")
+                    continue
         print(analog_value_0, analog_value_1)
         
         if threshold_0 > 52000:
