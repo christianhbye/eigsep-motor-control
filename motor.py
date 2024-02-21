@@ -103,8 +103,8 @@ class Motor:
 
         while True:
             if ser.in_waiting:
-                analog_str = ser.readline().decode('utf-8').strip()
-                a,b = analog_str().split()
+                analog_string = ser.readline().decode('utf-8').strip()
+                a,b = analog_string().split()
                 analog_value_0 = int(a)
                 analog_value_1 = int(b)
                 volt_value_0 = (3.3/65535)*analog_value_0
@@ -123,7 +123,7 @@ class Motor:
         ser.dtr = False
         time.sleep(0.5)
         ser.dtr = True
-        time.sleep(0.75)
+        time.sleep(1)
 
         analog_value_0=0
         analog_value_1=0
