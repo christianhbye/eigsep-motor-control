@@ -229,7 +229,7 @@ class Motor:
             speed_1 = 0
             reached_1 = True
 
-        if reached_1 == False or reached_1 == False:
+        if reached_0 == False or reached_1 == False:
             print('Correcting error.')
             direction_0 = 1 if direction_0 == 0 else 0
             direction_0 = 1 if direction_0 == 0 else 0
