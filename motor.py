@@ -90,7 +90,7 @@ class Motor:
             raise KeyError("Invalid motor id.")
     
     def serial_read(self):
-        baudrate = 921600
+        baudrate = 115200
         #port for 1st pico is "/dev/ttyACM0"
         port = "/dev/ttyACM0"
         ser = serial.Serial(port, baudrate)
@@ -116,7 +116,7 @@ class Motor:
 
     def serial_motor_control(self, threshold_0, threshold_1, speed_0, speed_1):
         print('Attempting to reach ', threshold_0, 'for threshold 0 and ', threshold_1, 'for threshold 1.')
-        baudrate = 921600
+        baudrate = 115200
         #port for 1st pico is "/dev/ttyACM0"
         port = "/dev/ttyACM0"
         ser = serial.Serial(port, baudrate)
