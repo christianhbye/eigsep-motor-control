@@ -105,12 +105,12 @@ class Motor:
             if ser.in_waiting:
                 analog_string = ser.readline().decode('utf-8').strip()
                 print(analog_string)
-                #a,b = analog_string().split()
-                #analog_value_0 = int(a)
-                #analog_value_1 = int(b)
-                #volt_value_0 = (3.3/65535)*analog_value_0
-                #volt_value_1 = (3.3/65535)*analog_value_1
-                #print("Analog Value 0: ", analog_value_0, " Voltage Value 0: ", volt_value_0, "  Analog Value 1: ", analog_value_1, " Voltage Value 1: ", volt_value_1)
+                a,b = analog_string.split()
+                analog_value_0 = int(a)
+                analog_value_1 = int(b)
+                volt_value_0 = (3.3/65535)*analog_value_0
+                volt_value_1 = (3.3/65535)*analog_value_1
+                print("Analog Value 0: ", analog_value_0, " Voltage Value 0: ", volt_value_0, "  Analog Value 1: ", analog_value_1, " Voltage Value 1: ", volt_value_1)
         #port = "/dev/ttyACM0"
         #serial_connect(port, 'higher', 50000)
 
@@ -131,7 +131,7 @@ class Motor:
         
         if ser.in_waiting:
             analog_str = ser.readline().decode('utf-8').strip()
-            a,b = analog_str().split()
+            a,b = analog_str.split()
             analog_value_0 = int(a)
             analog_value_1 = int(b)
         print(analog_value_0, analog_value_1)
@@ -173,7 +173,7 @@ class Motor:
         while True:
             if ser.in_waiting:
                 analog_str = ser.readline().decode('utf-8').strip()
-                a,b = analog_str().split()
+                a,b = analog_str.split()
                 analog_value_0 = int(a)
                 analog_value_1 = int(b)
                 volt_value_0 = (3.3/65535)*analog_value_0
@@ -216,7 +216,7 @@ class Motor:
             while True:
                 if ser.in_waiting:
                     analog_str = ser.readline().decode('utf-8').strip()
-                    a,b = analog_str().split()
+                    a,b = analog_str.split()
                     analog_value_0 = int(a)
                     analog_value_1 = int(b)
                     volt_value_0 = (3.3/65535)*analog_value_0
