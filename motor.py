@@ -182,25 +182,25 @@ class Motor:
                 if direction_0 == 0:
                     if analog_value_0 >= threshold_0: 
                         print ('Reached target 0.')
-                        self.motor.stop(0)
+                        self.stop(0)
                         reached_0 = True
                         #break
                 elif direction_0 == 1:
                     if analog_value_0 <= threshold_0:
                         print('Reached target 0.')
-                        self.motor.stop(0)
+                        self.stop(0)
                         reached_0 = True
                         #break
                 if direction_1 == 0:
                     if analog_value_1 >= threshold_1: 
                         print ('Reached target 1.')
-                        self.motor.stop(1)
+                        self.stop(1)
                         reached_1 = True
                         #break
                 elif direction_0 == 1:
                     if analog_value_1 <= threshold_1:
                         print('Reached target 1.')
-                        self.motor.stop(1)
+                        self.stop(1)
                         reached_1 = True
                         #break
                 if reached_0 == True and reached_1 == True:
