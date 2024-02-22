@@ -206,7 +206,7 @@ class Motor:
                             print ('Reached target 1.')
                             self.stop(1)
                             reached_1 = True
-                    elif direction_0 == 1 and reached_1 == False:
+                    elif direction_1 == 1 and reached_1 == False:
                         if analog_value_1 <= threshold_1:
                             print('Reached target 1.')
                             self.stop(1)
@@ -246,7 +246,7 @@ class Motor:
                         volt_value_0 = (3.3/65535)*analog_value_0
                         volt_value_1 = (3.3/65535)*analog_value_1
                         print("Analog Value 0: ", analog_value_0, " Voltage Value 0: ", volt_value_0, "  Analog Value 1: ", analog_value_1, " Voltage Value 1: ", volt_value_1)
-                        if direction_0 == 1 and reached_1 == False:
+                        if direction_0 == 1 and reached_0 == False:
                             if analog_value_0 <= threshold_0: 
                                 print ('Reached target 0.')
                                 self.stop(0)
