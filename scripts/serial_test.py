@@ -30,5 +30,6 @@ def serial_connect(port, operator, threshold):
                 print('Invalid operator.')
                 break
 
-#port = "/dev/ttyACM0"
-#serial_connect(port, 'higher', 50000)
+if __name__ == "__main__":
+    port = "/dev/ttyACM0"
+    serial_connect(port, 'higher', 50000)
