@@ -1,7 +1,7 @@
 from machine import ADC, Pin
 from time import sleep
 
-adc1 = ADC(Pin(26))
+adc1 = ADC(Pin(27))
 adc2 = ADC(Pin(28))
 uart = machine.UART(0, baudrate = 115200)
 count1 = 0
