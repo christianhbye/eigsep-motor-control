@@ -1,10 +1,9 @@
 import numpy as np
 from qwiic_scmd import QwiicScmd
 
+MOTOR_ID = {"az": 0, "alt": 1}
 
 class Motor(QwiicScmd):
-
-    MOTOR_ID = {"az": 0, "alt": 1}
 
     def __init__(self):
         """
@@ -39,7 +38,7 @@ class Motor(QwiicScmd):
             if speed == 0:
                 continue
             direction = 1 if v > 0 else 0
-            self.set_drive(self.MOTOR_ID[m], direction, speed)
+            self.set_drive(MOTOR_ID[m], direction, speed)
 
     def stop(self, motors=["az", "alt"]):
         """
@@ -55,7 +54,7 @@ class Motor(QwiicScmd):
         if isinstance(motors, str):
             motors = [motors]
         for m in motors:
-            self.motor.set_drive(self.MOTOR_ID[m], 0, 0)
+            self.motor.set_drive(MOTOR_ID[m], 0, 0)
 
     def stow(self, motors=["az", "alt"]):
         """Return to home."""
