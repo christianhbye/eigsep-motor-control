@@ -16,29 +16,47 @@ class Motor(QwiicScmd):
         for i in [0, 1]:
             self.set_drive(i, 0, 0)
         self.enable()
+        # current velocities of the form (direction, speed):
+        self.velocities = {"az": (0, 0), "alt": (0, 0)}
 
-    def start(self, speed_az=254, speed_alt=254):
+    def start(self, az_vel=254, alt_vel=254):
         """
         Start one or both motors with the given velocities. The given motor
         will not start if the speed is set to 0.
 
         Parameters
         ----------
-        speed_az : int
+        az_vel : int
             The velocity of the azimuthal motor. Positive values indicate
             clockwise rotation as seen from the top. Must be in the
             range [-255, 254].
-        speed_alt : int
+        alt_vel : int
             Same as ``speed_az'' for the altitude motor.
 
         """
-        velocities = {"az": speed_az, "alt": speed_alt}
+        velocities = {"az": az_vel, "alt": alt_vel}
         for m, v in velocities.items():
             speed = np.abs(v)
             if speed == 0:
                 continue
             direction = 1 if v > 0 else 0
             self.set_drive(MOTOR_ID[m], direction, speed)
+            self.velocities[m] = (direction, speed)
+
+    def reverse(self, motor):
+        """
+        Reverse one of the motors.
+
+        Parameters
+        ----------
+        motor : str
+            Indicate which motor to reverse. Must be ``az'' or ``alt''.
+
+        """
+        d, s = self.velocities[motor]
+        reverse_dir = (d + 1) % 2  # turn 0 to 1 and vice versa
+        self.set_drive(MOTOR_ID[motor], reverse_dir, s)
+        self.velocities[motor] = (reverse_dir, s)
 
     def stop(self, motors=["az", "alt"]):
         """
