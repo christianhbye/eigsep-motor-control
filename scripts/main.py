@@ -9,7 +9,8 @@ SLEEP = 0.05  # seconds between readings
 
 adc1 = ADC(Pin(ADC_PIN1))
 adc2 = ADC(Pin(ADC_PIN2))
-uart = UART(0, baudrate=BAUDRATE)
+uart = UART(0, baudrate=BAUDRATE)  # XXX is this necessary?
+#uart.init?
 
 while True:
     cnt = 0
