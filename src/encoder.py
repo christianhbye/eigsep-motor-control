@@ -20,7 +20,7 @@ class Encoder(QwiicDualEncoderReader):
         elif mid == 1:
             return self.encoder.count2
 
-class Pot:
+class Potentiometer:
 
     VMAX = 3.3  # voltage range
     NBITS = 16  # ADC number of bits
@@ -46,6 +46,9 @@ class Pot:
     def read_volts(self, motor):
         analog = self.read_analog()
         return self.bit2volt(analog)
+
+    @property
+    def 
 
     def get_position(self, motor):
         v = self.read_volts()
