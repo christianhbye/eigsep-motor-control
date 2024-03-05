@@ -43,7 +43,7 @@ class Motor(QwiicScmd):
             self.set_drive(MOTOR_ID[m], direction, speed)
             self.velocities[m] = (direction, speed)
 
-    def reverse(self, motor):
+    def reverse(self, motor, event=None):
         """
         Reverse one of the motors.
 
@@ -51,12 +51,22 @@ class Motor(QwiicScmd):
         ----------
         motor : str
             Indicate which motor to reverse. Must be ``az'' or ``alt''.
+        event : threading.Event
+            Optionally specify an event, such that the reverse only happens
+            if the event is set.
 
         """
+        try:
+            if not event.is_set():  # don't do anything, exit the function
+                return
+        except AttributeError:  # event is None
+            pass
         d, s = self.velocities[motor]
         reverse_dir = (d + 1) % 2  # turn 0 to 1 and vice versa
         self.set_drive(MOTOR_ID[motor], reverse_dir, s)
         self.velocities[motor] = (reverse_dir, s)
+        if event is not None:
+            event.clear()
 
     def stop(self, motors=["az", "alt"]):
         """
