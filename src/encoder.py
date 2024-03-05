@@ -22,8 +22,9 @@ class Encoder(QwiicDualEncoderReader):
 
 class Potentiometer:
 
-    VMAX = 3.3  # voltage range
     NBITS = 16  # ADC number of bits
+    VMAX = 3.3  # voltage range of pot (V)
+    TOL = 0.5  # how close to 0 or VMAX we can go in volts before reversing
 
     def __init__(self, motors=["az", "alt"])
         """
@@ -44,13 +45,31 @@ class Potentiometer:
         raise NotImplementedError
 
     def read_volts(self, motor):
-        analog = self.read_analog()
+        analog = self.read_analog(motor)
         return self.bit2volt(analog)
 
-    @property
-    def 
+    def hit_edge(self, motor):
+        """
+        Check if the motor has rotated to the end of the pot voltage range.
 
-    def get_position(self, motor):
-        v = self.read_volts()
-        #XXX convert voltage to position
-        raise NotImplementedError
+        Parameters
+        ----------
+        motor : str
+            Specify the motor, must be ``alt'' or ``az''.
+
+        Returns
+        -------
+        bool
+            True if the motor has hit the edge, False otherwise.
+
+        """
+        v = self.read_volts(motor)
+        return v >= self.VMAX - self.TOL or v <= self.TOL:
+
+    def monitor(self, az_event, alt_event):
+        while True:
+            if self.hit_edge("az"):
+                az_event.set()
+            if self.hit_edge("alt"):
+                alt_event.set()
+            # may need a sleep here, but read analog alredy sleeps
