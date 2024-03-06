@@ -1,4 +1,3 @@
-import serial
 import time
 from threading import Event, Thread
 import eigsep_motor_control as emc
@@ -6,15 +5,6 @@ import eigsep_motor_control as emc
 # motor velocities
 AZ_VEL = 254
 ALT_VEL = 254
-# serial connection (pi to pico)
-PORT = "/dev/ttyACM0"
-BAUDRATE = 115200
-
-ser = serial.Serial(PORT, BAUDRATE)
-# ser.dtr = False
-# time.sleep(0.5)
-ser.dtr = True
-# time.sleep(0.5)
 
 pot = emc.Potentiometer(motors=["az", "alt"])
 # create events that tells motors to reverse direction
