@@ -1,3 +1,4 @@
+# flake8: noqa
 
 def serial_motor_control(self, threshold_0, threshold_1, speed_0, speed_1):
     print(
