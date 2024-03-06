@@ -1,7 +1,10 @@
+import logging
 import serial
+import struct
 import time
 from qwiic_dual_encoder_reader import QwiicDualEncoderReader
-from .motor import MOTOR_ID
+from eigsep_motor_control.motor import MOTOR_ID
+from .main import BAUDRATE, INT_LEN, SLEEP
 
 class Encoder(QwiicDualEncoderReader):
 
@@ -26,27 +29,52 @@ class Potentiometer:
     VMAX = 3.3  # voltage range of pot (V)
     TOL = 0.5  # how close to 0 or VMAX we can go in volts before reversing
 
-    def __init__(self, motors=["az", "alt"])
+    # serial connection constants (BAUDRATE defined in main.py)
+    PORT = '/dev/ttyACM0'
+    TIMEOUT = INT_LEN * SLEEP * 1.2  # set timeout to be sleep time + 20%
+
+    def __init__(self)
         """
         Class for reading voltages from the potentiometers.
         """
-        #XXX should specify baud rate, port etc and open the serial connection.
-        pass
+        self.ser = serial.Serial(
+            port=self.PORT, baudrate=BAUDRATE, timeout=self.TIMEOUT
+        )
+        sel.ser.reset_input_buffer()
+        
+
 
     def bit2volt(self, analog_value):
         res = 2 ** self.NBITS - 1
         ratio = self.VMAX / res
         return ratio * analog_value
 
-    def read_analog(self, motor):
+    def read_analog(self):
         """
-        Read the analog value from a pot.
+        Read the analog values of the pots.
+
+        Returns
+        -------
+        val : tuple
+            Tuple of the analog values of the pots. The first value is the
+            azimuth pot and the second value is the altitude pot.
+
         """
-        raise NotImplementedError
+        data = self.ser.read(8)
+        if len(data) < 8:
+            logging.warning("Serial read timed out.")
+            #XXX do something here
+        else:
+            val = struct.unpack("<ff", data)
+            return val
+
 
     def read_volts(self, motor):
-        analog = self.read_analog(motor)
-        return self.bit2volt(analog)
+        analog = self.read_analog()
+        if motor == "az":
+            return self.bit2volt(analog[0])
+        elif motor == "alt":
+            return self.bit2volt(analog[1])
 
     def hit_edge(self, motor):
         """
