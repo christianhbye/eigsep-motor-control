@@ -3,6 +3,7 @@ from qwiic_scmd import QwiicScmd
 
 MOTOR_ID = {"az": 0, "alt": 1}
 
+
 class Motor(QwiicScmd):
 
     def __init__(self):

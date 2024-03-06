@@ -1,10 +1,10 @@
 import logging
 import serial
 import struct
-import time
 from qwiic_dual_encoder_reader import QwiicDualEncoderReader
 from eigsep_motor_control.motor import MOTOR_ID
 from .main import BAUDRATE, INT_LEN, SLEEP
+
 
 class Encoder(QwiicDualEncoderReader):
 
@@ -23,6 +23,7 @@ class Encoder(QwiicDualEncoderReader):
         elif mid == 1:
             return self.encoder.count2
 
+
 class Potentiometer:
 
     NBITS = 16  # ADC number of bits
@@ -30,22 +31,20 @@ class Potentiometer:
     TOL = 0.5  # how close to 0 or VMAX we can go in volts before reversing
 
     # serial connection constants (BAUDRATE defined in main.py)
-    PORT = '/dev/ttyACM0'
+    PORT = "/dev/ttyACM0"
     TIMEOUT = INT_LEN * SLEEP * 1.2  # set timeout to be sleep time + 20%
 
-    def __init__(self)
+    def __init__(self):
         """
         Class for reading voltages from the potentiometers.
         """
         self.ser = serial.Serial(
             port=self.PORT, baudrate=BAUDRATE, timeout=self.TIMEOUT
         )
-        sel.ser.reset_input_buffer()
-        
-
+        self.ser.reset_input_buffer()
 
     def bit2volt(self, analog_value):
-        res = 2 ** self.NBITS - 1
+        res = 2**self.NBITS - 1
         ratio = self.VMAX / res
         return ratio * analog_value
 
@@ -63,11 +62,10 @@ class Potentiometer:
         data = self.ser.read(8)
         if len(data) < 8:
             logging.warning("Serial read timed out.")
-            #XXX do something here
+            # XXX do something here
         else:
             val = struct.unpack("<ff", data)
             return val
-
 
     def read_volts(self, motor):
         analog = self.read_analog()
@@ -92,7 +90,7 @@ class Potentiometer:
 
         """
         v = self.read_volts(motor)
-        return v >= self.VMAX - self.TOL or v <= self.TOL:
+        return v >= self.VMAX - self.TOL or v <= self.TOL
 
     def monitor(self, az_event, alt_event):
         while True:
