@@ -4,7 +4,7 @@ import eigsep_motor_control as emc
 
 # motor velocities
 AZ_VEL = 254
-ALT_VEL = 0#254
+ALT_VEL = 0  # 254
 
 pot = emc.Potentiometer()
 # create events that tells motors to reverse direction
@@ -37,4 +37,4 @@ while True:
         break
 
 motor.stop(motors=["az", "alt"])
-#motor.stow(motors=["az", "alt"])
+# motor.stow(motors=["az", "alt"])
