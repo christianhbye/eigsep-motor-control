@@ -73,7 +73,7 @@ class Motor(QwiicScmd):
         if isinstance(motors, str):
             motors = [motors]
         for m in motors:
-            self.motor.set_drive(MOTOR_ID[m], 0, 0)
+            self.set_drive(MOTOR_ID[m], 0, 0)
 
     def stow(self, motors=["az", "alt"]):
         """Return to home."""
