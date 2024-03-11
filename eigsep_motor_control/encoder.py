@@ -3,7 +3,7 @@ import serial
 import struct
 from qwiic_dual_encoder_reader import QwiicDualEncoderReader
 from eigsep_motor_control.motor import MOTOR_ID
-from ..scripts.main import BAUDRATE, INT_LEN, SLEEP
+from eigsep_motor_control.serial_params import BAUDRATE, INT_LEN, SLEEP
 
 
 class Encoder(QwiicDualEncoderReader):
