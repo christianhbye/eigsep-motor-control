@@ -8,8 +8,8 @@ BAUDRATE = 115200
 INT_LEN = 10  # number of readings to average
 SLEEP = 0.05  # seconds between readings
 
-adc1 = ADC(Pin(ADC_PIN1))
-adc2 = ADC(Pin(ADC_PIN2))
+adc1 = ADC(Pin(ADC_PIN1))  # azimuth
+adc2 = ADC(Pin(ADC_PIN2))  # altitude
 uart = UART(0)
 uart.init(baudrate=BAUDRATE)
 
