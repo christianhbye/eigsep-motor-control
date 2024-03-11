@@ -60,7 +60,7 @@ class Potentiometer:
 
         """
         data = self.ser.read(8)
-        if len(data) < 8:
+        if len(data) < 8:  # timeout before all data was read
             logging.warning("Serial read timed out.")
             # XXX do something here
         else:
@@ -74,7 +74,7 @@ class Potentiometer:
         elif motor == "alt":
             return self.bit2volt(analog[1])
 
-    def hit_edge(self, motor):
+    def past_limit(self, motor):
         """
         Check if the motor has rotated to the end of the pot voltage range.
 
@@ -94,8 +94,8 @@ class Potentiometer:
 
     def monitor(self, az_event, alt_event):
         while True:
-            if self.hit_edge("az"):
+            if self.past_limit("az"):
                 az_event.set()
-            if self.hit_edge("alt"):
+            if self.past_limit("alt"):
                 alt_event.set()
             # may need a sleep here, but read analog alredy sleeps
