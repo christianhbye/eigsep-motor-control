@@ -1,6 +1,7 @@
 import logging
 import serial
 import struct
+import numpy as np
 from qwiic_dual_encoder_reader import QwiicDualEncoderReader
 from eigsep_motor_control.motor import MOTOR_ID
 from eigsep_motor_control.serial_params import BAUDRATE, INT_LEN, SLEEP
@@ -65,37 +66,31 @@ class Potentiometer:
             # XXX do something here
         else:
             val = struct.unpack("<ff", data)
-            return val
+            return np.array(val)
 
-    def read_volts(self, motor):
+    def read_volts(self, motor=None):
         analog = self.read_analog()
         if motor == "az":
             return self.bit2volt(analog[0])
         elif motor == "alt":
             return self.bit2volt(analog[1])
-
-    def past_limit(self, motor):
-        """
-        Check if the motor has rotated to the end of the pot voltage range.
-
-        Parameters
-        ----------
-        motor : str
-            Specify the motor, must be ``alt'' or ``az''.
-
-        Returns
-        -------
-        bool
-            True if the motor has hit the edge, False otherwise.
-
-        """
-        v = self.read_volts(motor)
-        return v >= self.VMAX - self.TOL or v <= self.TOL
+        else:
+            return self.bit2volt(analog)
 
     def monitor(self, az_event, alt_event):
+        events = (az_event, alt_event)
+        vprev = None
         while True:
-            if self.past_limit("az"):
-                az_event.set()
-            if self.past_limit("alt"):
-                alt_event.set()
+            volts = self.read_volts()
+            if vprev is None:
+                vprev = volts
+                continue
+            for i, v in enumerate(volts):
+                if v - vprev[i] > 0 and v >= self.VMAX - self.TOL:
+                    logging.warning(f"Potentiometer {i} at max voltage.")
+                    events[i].set()
+                elif v - vprev[i] < 0 and v <= self.TOL:
+                    logging.warning(f"Potentiometer {i} at min voltage.")
+                    events[i].set()
+            vprev = volts
             # may need a sleep here, but read analog alredy sleeps
