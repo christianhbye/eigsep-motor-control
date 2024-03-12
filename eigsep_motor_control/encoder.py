@@ -78,6 +78,7 @@ class Potentiometer:
             return self.bit2volt(analog)
 
     def monitor(self, az_event, alt_event):
+        names = ("az", "alt")
         events = (az_event, alt_event)
         vprev = None
         while True:
@@ -86,11 +87,13 @@ class Potentiometer:
                 vprev = volts
                 continue
             for i, v in enumerate(volts):
+                print(v)
+                break
                 if v - vprev[i] > 0 and v >= self.VMAX - self.TOL:
-                    logging.warning(f"Potentiometer {i} at max voltage.")
+                    logging.warning(f"Pot {names[i]} at max voltage.")
                     events[i].set()
                 elif v - vprev[i] < 0 and v <= self.TOL:
-                    logging.warning(f"Potentiometer {i} at min voltage.")
+                    logging.warning(f"Pot {names[i]} at min voltage.")
                     events[i].set()
             vprev = volts
             # may need a sleep here, but read analog alredy sleeps
