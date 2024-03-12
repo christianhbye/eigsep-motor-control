@@ -2,6 +2,8 @@ from machine import ADC, Pin, UART
 import struct
 from time import sleep
 
+led = Pin(25, Pin.OUT)
+
 ADC_PIN1 = 27
 ADC_PIN2 = 28
 BAUDRATE = 115200
@@ -14,12 +16,15 @@ uart = UART(0)
 uart.init(baudrate=BAUDRATE)
 
 while True:
-    cnt = 0
     value1 = 0
     value2 = 0
-    while cnt < INT_LEN:
+    for cnt in range(INT_LEN):
+        led.toggle()
         value1 += adc1.read_u16()
         value2 += adc2.read_u16()
         sleep(SLEEP)
     data = struct.pack("<ii", value1, value2)
     uart.write(data)
+    led.toggle()
+    sleep(0.5)
+    led.toggle()
