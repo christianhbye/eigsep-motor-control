@@ -55,8 +55,8 @@ class Potentiometer:
 
         Returns
         -------
-        val : tuple
-            Tuple of the analog values of the pots. The first value is the
+        val : np.ndarray
+            The analog values of the pots. The first value is the
             azimuth pot and the second value is the altitude pot.
 
         """
@@ -65,8 +65,8 @@ class Potentiometer:
             logging.warning("Serial read timed out.")
             # XXX do something here
         else:
-            val = struct.unpack("<ff", data)
-            return np.array(val)
+            val = struct.unpack("<ii", data)
+            return np.array(val) / INT_LEN
 
     def read_volts(self, motor=None):
         analog = self.read_analog()

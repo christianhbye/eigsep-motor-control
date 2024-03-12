@@ -21,5 +21,5 @@ while True:
         value1 += adc1.read_u16()
         value2 += adc2.read_u16()
         sleep(SLEEP)
-    data = struct.pack("<ff", value1 / INT_LEN, value2 / INT_LEN)
+    data = struct.pack("<ii", value1, value2)
     uart.write(data)
