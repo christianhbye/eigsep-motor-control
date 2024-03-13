@@ -19,12 +19,9 @@ while True:
     value1 = 0
     value2 = 0
     for cnt in range(INT_LEN):
-        led.toggle()
         value1 += adc1.read_u16()
         value2 += adc2.read_u16()
         sleep(SLEEP)
     data = struct.pack("<ii", value1, value2)
     uart.write(data)
-    led.toggle()
-    sleep(0.5)
     led.toggle()
