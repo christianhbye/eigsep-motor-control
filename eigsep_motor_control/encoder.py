@@ -33,7 +33,7 @@ class Potentiometer:
 
     # serial connection constants (BAUDRATE defined in main.py)
     PORT = "/dev/ttyACM0"
-    TIMEOUT = INT_LEN * SLEEP * 1.2  # set timeout to be sleep time + 20%
+    TIMEOUT = INT_LEN * SLEEP * 2  # set timeout to be sleep time * 2
 
     def __init__(self):
         """
@@ -60,7 +60,9 @@ class Potentiometer:
             azimuth pot and the second value is the altitude pot.
 
         """
-        data = self.ser.read(8)
+        print("Reading")
+        data = self.ser.readline().decode("utf-8").strip() 
+        print("read")
         if len(data) < 8:  # timeout before all data was read
             logging.warning("Serial read timed out.")
             # XXX do something here
