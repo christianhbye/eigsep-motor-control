@@ -1,5 +1,4 @@
-from machine import ADC, Pin, UART
-import struct
+from machine import ADC, Pin
 from time import sleep
 
 led = Pin(25, Pin.OUT)
@@ -12,8 +11,6 @@ SLEEP = 0.05  # seconds between readings
 
 adc1 = ADC(Pin(ADC_PIN1))  # azimuth
 adc2 = ADC(Pin(ADC_PIN2))  # altitude
-# uart = UART(0)
-# uart.init(baudrate=BAUDRATE)
 
 while True:
     value1 = 0

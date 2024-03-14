@@ -1,7 +1,6 @@
 import logging
-import serial
-import struct
 import numpy as np
+import serial
 from qwiic_dual_encoder_reader import QwiicDualEncoderReader
 from eigsep_motor_control.motor import MOTOR_ID
 from eigsep_motor_control.serial_params import BAUDRATE, INT_LEN, SLEEP
