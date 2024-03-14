@@ -60,15 +60,13 @@ class Potentiometer:
             azimuth pot and the second value is the altitude pot.
 
         """
-        print("Reading")
         data = self.ser.readline().decode("utf-8").strip() 
-        print("read")
         if len(data) < 8:  # timeout before all data was read
             logging.warning("Serial read timed out.")
             # XXX do something here
         else:
-            val = struct.unpack("<ii", data)
-            return np.array(val) / INT_LEN
+            vals = [int(d) for d in data.split()]
+            return np.array(vals) / INT_LEN
 
     def read_volts(self, motor=None):
         analog = self.read_analog()
