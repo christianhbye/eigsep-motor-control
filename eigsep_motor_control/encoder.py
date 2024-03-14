@@ -60,7 +60,7 @@ class Potentiometer:
             azimuth pot and the second value is the altitude pot.
 
         """
-        data = self.ser.readline().decode("utf-8").strip() 
+        data = self.ser.readline().decode("utf-8").strip()
         if len(data) < 8:  # timeout before all data was read
             logging.warning("Serial read timed out.")
             # XXX do something here
