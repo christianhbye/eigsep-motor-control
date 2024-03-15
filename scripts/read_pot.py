@@ -6,4 +6,4 @@ pot = Potentiometer()
 while True:
     v = pot.read_volts()
     print(f"az: {v[0]:.3f}, alt: {v[1]:.3f}")
-    time.sleep(0.1)
+    time.sleep(0.5)
