@@ -1,10 +1,9 @@
 import logging
 import numpy as np
 import serial
-import time
 from qwiic_dual_encoder_reader import QwiicDualEncoderReader
 from eigsep_motor_control.motor import MOTOR_ID
-from eigsep_motor_control.serial_params import BAUDRATE, INT_LEN, SLEEP
+from eigsep_motor_control.serial_params import BAUDRATE, INT_LEN
 
 
 class Encoder(QwiicDualEncoderReader):
@@ -53,8 +52,8 @@ class Potentiometer:
         Returns
         -------
         data : np.ndarray
-            The analog values of the pots averaged over INT_LEN 
-            measurements. The first value is associated with the azimuth 
+            The analog values of the pots averaged over INT_LEN
+            measurements. The first value is associated with the azimuth
             pot, the second value is the altitude pot.
 
         """
