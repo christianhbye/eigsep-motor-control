@@ -27,8 +27,9 @@ class Encoder(QwiicDualEncoderReader):
 class Potentiometer:
 
     NBITS = 16  # ADC number of bits
-    VMAX = 3.3  # voltage range of pot (V)
-    TOL = 0.5  # how close to 0 or VMAX we can go in volts before reversing
+    # pot voltage range (center is 1.2V, one turn is ~0.5V)
+    VMIN = 0.7
+    VMAX = 1.7
 
     # serial connection constants (BAUDRATE defined in main.py)
     PORT = "/dev/ttyACM0"
@@ -76,15 +77,18 @@ class Potentiometer:
         vprev = None
         while True:
             volts = self.read_volts()
+            msg = ""
+            for m, v in zip(names, volts):
+                msg += f"{m}: {v:.3f} V "
+            print(msg)
             if vprev is None:
                 vprev = volts
                 continue
             for i, v in enumerate(volts):
-                print(v)
-                if v - vprev[i] > 0 and v >= self.VMAX - self.TOL:
+                if v - vprev[i] > 0 and v >= self.VMAX:
                     logging.warning(f"Pot {names[i]} at max voltage.")
                     events[i].set()
-                elif v - vprev[i] < 0 and v <= self.TOL:
+                elif v - vprev[i] < 0 and v <= self.VMIN:
                     logging.warning(f"Pot {names[i]} at min voltage.")
                     events[i].set()
             vprev = volts
