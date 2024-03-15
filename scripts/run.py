@@ -1,39 +1,55 @@
+from argparse import ArgumentParser
+import logging
 import time
 from threading import Event, Thread
 import eigsep_motor_control as emc
 
-# motor velocities
-AZ_VEL = 254
-ALT_VEL = 0  # 254
+parser = ArgumentParser(description="Control the motors")
+parser.add_argument("-a", "--az", type=int, help="Azimuth motor velocity")
+parser.add_argument("-e", "--el", type=int, help="Elevation motor velocity")
+parser.add_argument(
+    "-p", "--pot", action="store_true", help="Monitor potentiometer"
+)
+args = parser.parse_args()
 
-pot = emc.Potentiometer()
-# create events that tells motors to reverse direction
+# motor velocities
+AZ_VEL = args.az if args.az else 0
+ALT_VEL = args.el if args.el else 0
+
+# monitor potentiometer
 az_reverse = Event()
 alt_reverse = Event()
-# thread monitoring potentiometer voltage and setting events
-thd = Thread(target=pot.monitor, args=(az_reverse, alt_reverse), daemon=True)
-print("starting pot thread")
-thd.start()
+if args.pot:
+    pot = emc.Potentiometer()
+    # create events that tells motors to reverse direction
+    # thread monitoring potentiometer voltage and setting events
+    thd = Thread(
+        target=pot.monitor, args=(az_reverse, alt_reverse), daemon=True
+    )
+    logging.info("Starting pot thread.")
+    thd.start()
+else:
+    logging.warning("Potentiometers not being monitored.")
 
 # start motors
-print("start motors")
+logging.info(f"Starting motors with speeds: az={AZ_VEL}, alt={ALT_VEL}.")
 motor = emc.Motor()
 motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
 
 while True:
-    print("...")
     try:
         if az_reverse.is_set():
-            print("reverse az")
+            logging.info("Reversing az motor.")
             motor.reverse("az")
             az_reverse.clear()
         if alt_reverse.is_set():
-            print("reverse alt")
+            logging.info("Reversing alt motor.")
             motor.reverse("alt")
             alt_reverse.clear()
         time.sleep(0.1)
         continue
     except KeyboardInterrupt:
+        logging.info("Exiting.")
         break
 
 motor.stop(motors=["az", "alt"])
