@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 import serial
+import time
 from qwiic_dual_encoder_reader import QwiicDualEncoderReader
 from eigsep_motor_control.motor import MOTOR_ID
 from eigsep_motor_control.serial_params import BAUDRATE, INT_LEN, SLEEP
@@ -32,15 +33,12 @@ class Potentiometer:
 
     # serial connection constants (BAUDRATE defined in main.py)
     PORT = "/dev/ttyACM0"
-    TIMEOUT = INT_LEN * SLEEP * 2  # set timeout to be sleep time * 2
 
     def __init__(self):
         """
         Class for reading voltages from the potentiometers.
         """
-        self.ser = serial.Serial(
-            port=self.PORT, baudrate=BAUDRATE, timeout=self.TIMEOUT
-        )
+        self.ser = serial.Serial(port=self.PORT, baudrate=BAUDRATE)
         self.ser.reset_input_buffer()
 
     def bit2volt(self, analog_value):
@@ -54,18 +52,15 @@ class Potentiometer:
 
         Returns
         -------
-        val : np.ndarray
-            The analog values of the pots. The first value is the
-            azimuth pot and the second value is the altitude pot.
+        data : np.ndarray
+            The analog values of the pots averaged over INT_LEN 
+            measurements. The first value is associated with the azimuth 
+            pot, the second value is the altitude pot.
 
         """
         data = self.ser.readline().decode("utf-8").strip()
-        if len(data) < 8:  # timeout before all data was read
-            logging.warning("Serial read timed out.")
-            # XXX do something here
-        else:
-            vals = [int(d) for d in data.split()]
-            return np.array(vals) / INT_LEN
+        data = [int(d) for d in data.split()]
+        return np.array(data) / INT_LEN
 
     def read_volts(self, motor=None):
         analog = self.read_analog()
@@ -87,7 +82,6 @@ class Potentiometer:
                 continue
             for i, v in enumerate(volts):
                 print(v)
-                break
                 if v - vprev[i] > 0 and v >= self.VMAX - self.TOL:
                     logging.warning(f"Pot {names[i]} at max voltage.")
                     events[i].set()
@@ -95,4 +89,3 @@ class Potentiometer:
                     logging.warning(f"Pot {names[i]} at min voltage.")
                     events[i].set()
             vprev = volts
-            # may need a sleep here, but read analog alredy sleeps
