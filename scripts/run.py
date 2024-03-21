@@ -4,6 +4,9 @@ import time
 from threading import Event, Thread
 import eigsep_motor_control as emc
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 parser = ArgumentParser(description="Control the motors")
 parser.add_argument("-a", "--az", type=int, help="Azimuth motor velocity")
 parser.add_argument("-e", "--el", type=int, help="Elevation motor velocity")
@@ -41,10 +44,12 @@ while True:
         if az_reverse.is_set():
             logging.info("Reversing az motor.")
             motor.reverse("az")
+            time.sleep(1) #XXX
             az_reverse.clear()
         if alt_reverse.is_set():
             logging.info("Reversing alt motor.")
             motor.reverse("alt")
+            time.sleep(1) #XXX
             alt_reverse.clear()
         time.sleep(0.1)
         continue
