@@ -27,6 +27,7 @@ class Encoder(QwiicDualEncoderReader):
 class Potentiometer:
 
     NBITS = 16  # ADC number of bits
+    VMAX = 3.3
 
     # serial connection constants (BAUDRATE defined in main.py)
     PORT = "/dev/ttyACM0"
@@ -39,7 +40,7 @@ class Potentiometer:
         self.ser.reset_input_buffer()
 
         # voltage range of the pots
-        self.VOLT_RANGE = {"az": (0.7, 1.7), "alt": (0.7, 1.7)}
+        self.VOLT_RANGE = {"az": (0.7, 1.5), "alt": (0.7, 1.7)}
 
     def bit2volt(self, analog_value):
         res = 2**self.NBITS - 1
