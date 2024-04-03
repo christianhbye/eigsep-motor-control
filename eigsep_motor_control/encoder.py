@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 import serial
+import time
 from qwiic_dual_encoder_reader import QwiicDualEncoderReader
 from eigsep_motor_control.motor import MOTOR_ID
 from eigsep_motor_control.serial_params import BAUDRATE, INT_LEN
@@ -42,6 +43,25 @@ class Potentiometer:
         # voltage range of the pots
         self.VOLT_RANGE = {"az": (0.7, 1.5), "alt": (0.7, 1.7)}
 
+        # voltage measurements (az, alt)
+        size = 10  # number of measurements to store XXX
+        self.volts = np.zeros((size, 2))
+        self.reset_volt_readings()
+
+    @property
+    def vdiff(self):
+        az, alt = np.diff(self.volts, axis=0)
+        return {"az": az, "alt": alt}
+
+    @property
+    def direction(self):
+        # XXX might need to adjust the size so that we can pick up change
+        # of direction quickly enough
+        d = {}
+        for k, v in self.vdiff.items():
+            d[k] = np.sign(np.mean(v))
+        return d
+
     def bit2volt(self, analog_value):
         res = 2**self.NBITS - 1
         ratio = self.VMAX / res
@@ -64,34 +84,40 @@ class Potentiometer:
         return np.array(data) / INT_LEN
 
     def read_volts(self, motor=None):
-        analog = self.read_analog()
+        v = self.bit2volt(self.read_analog())
+        self.volts = self.concatenate((self.volts[1:], v), axis=0)
         if motor == "az":
-            return self.bit2volt(analog[0])
+            return v[0]
         elif motor == "alt":
-            return self.bit2volt(analog[1])
+            return v[1]
         else:
-            return self.bit2volt(analog)
+            return v
+
+    def reset_volt_readings(self):
+        """
+        Read pot voltages quickly in succesion to reset the buffer. This
+        is useful to get meaningful derivatives.
+        """
+        for i in range(self.volts.shape[0]):
+            _ = self.read_volts()
+            time.sleep(0.1)
 
     def monitor(self, az_event, alt_event):
         names = ("az", "alt")
         events = (az_event, alt_event)
-        vprev = None
         while True:
             volts = self.read_volts()
             msg = ""
             for m, v in zip(names, volts):
                 msg += f"{m}: {v:.3f} V "
             print(msg)
-            if vprev is None:
-                vprev = volts
-                continue
             for i in range(2):
                 vmin = self.VOLT_RANGE[names[i]][0]
                 vmax = self.VOLT_RANGE[names[i]][1]
-                if volts[i] - vprev[i] > 0 and volts[i] >= vmax:
+                d = self.direction[i]
+                if d > 0 and volts[i] >= vmax:
                     logging.warning(f"Pot {names[i]} at max voltage.")
                     events[i].set()
-                elif volts[i] - vprev[i] < 0 and volts[i] <= vmin:
+                elif d < 0 and volts[i] <= vmin:
                     logging.warning(f"Pot {names[i]} at min voltage.")
                     events[i].set()
-            vprev = volts
