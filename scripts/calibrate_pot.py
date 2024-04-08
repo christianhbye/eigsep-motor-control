@@ -39,9 +39,9 @@ def calibrate(motor, direction):
     az_vel *= direction
     alt_vel *= direction
 
-    motor = emc.Motor()
+    m = emc.Motor()
     pot = emc.Potentiometer()
-    motor.start(az_vel=az_vel, alt_vel=alt_vel)
+    m.start(az_vel=az_vel, alt_vel=alt_vel)
     pot.reset_volt_readings()
 
     # loops until the switch is triggered
@@ -53,7 +53,7 @@ def calibrate(motor, direction):
             time.sleep(0.1)
     except KeyboardInterrupt:
         print("Interrupting.")
-        motor.stop()
+        m.stop()
     # get the extremum pot voltage (max if forward, min if reverse)
     vm = np.max(direction * pot.volts[:, motor_id])
 
@@ -74,8 +74,9 @@ def calibrate(motor, direction):
             time.sleep(0.1)
     except KeyboardInterrupt:
         print("Interrupting.")
-        motor.stop()
+        m.stop()
 
+    m.stop()
     return vm, stuck_cnt > 2
 
 

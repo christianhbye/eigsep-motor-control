@@ -44,13 +44,13 @@ class Potentiometer:
         self.VOLT_RANGE = {"az": (0.7, 1.5), "alt": (0.7, 1.7)}
 
         # voltage measurements (az, alt)
-        size = 10  # number of measurements to store XXX
+        size = 5  # number of measurements to store XXX
         self.volts = np.zeros((size, 2))
         self.reset_volt_readings()
 
     @property
     def vdiff(self):
-        az, alt = np.diff(self.volts, axis=0)
+        az, alt = np.diff(self.volts, axis=0).T
         return {"az": az, "alt": alt}
 
     @property
@@ -85,7 +85,7 @@ class Potentiometer:
 
     def read_volts(self, motor=None):
         v = self.bit2volt(self.read_analog())
-        self.volts = self.concatenate((self.volts[1:], v), axis=0)
+        self.volts = np.concatenate((self.volts[1:], v[None]), axis=0)
         if motor == "az":
             return v[0]
         elif motor == "alt":
@@ -114,7 +114,7 @@ class Potentiometer:
             for i in range(2):
                 vmin = self.VOLT_RANGE[names[i]][0]
                 vmax = self.VOLT_RANGE[names[i]][1]
-                d = self.direction[i]
+                d = self.direction[names[i]]
                 if d > 0 and volts[i] >= vmax:
                     logging.warning(f"Pot {names[i]} at max voltage.")
                     events[i].set()
