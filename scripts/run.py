@@ -43,8 +43,8 @@ az_limit = Event()
 alt_limit = Event()
 limits = (az_limit, alt_limit)
 
-while True:
-    try:
+try:
+    while True:
         emc.reverse_limit(motor, pot, limits)
         if az_reverse.is_set():
             logging.info("Reversing az motor.")
@@ -57,10 +57,9 @@ while True:
             pot.reset_volt_readings()
             alt_reverse.clear()
         time.sleep(0.1)
-        continue
-    except KeyboardInterrupt:
-        logging.info("Exiting.")
-        break
+except KeyboardInterrupt:
+    logging.info("Exiting.")
+finally:
+    motor.stop()
 
-motor.stop(motors=["az", "alt"])
 # motor.stow(motors=["az", "alt"])
