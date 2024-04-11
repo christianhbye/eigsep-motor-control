@@ -100,7 +100,7 @@ class Potentiometer:
         """
         for i in range(self.volts.shape[0]):
             _ = self.read_volts()
-            time.sleep(0.1)
+            time.sleep(0.05)
 
     def monitor(self, az_event, alt_event):
         names = ("az", "alt")
