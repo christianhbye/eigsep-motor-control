@@ -39,8 +39,8 @@ logging.info(f"Starting motors with speeds: az={AZ_VEL}, alt={ALT_VEL}.")
 motor = emc.Motor()
 motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
 
-while True:
-    try:
+try:
+    while True:
         if az_reverse.is_set():
             logging.info("Reversing az motor.")
             motor.reverse("az")
@@ -52,10 +52,9 @@ while True:
             pot.reset_volt_readings()
             alt_reverse.clear()
         time.sleep(0.1)
-        continue
-    except KeyboardInterrupt:
-        logging.info("Exiting.")
-        break
+except KeyboardInterrupt:
+    logging.info("Exiting.")
+finally:
+    motor.stop()
 
-motor.stop(motors=["az", "alt"])
 # motor.stow(motors=["az", "alt"])
