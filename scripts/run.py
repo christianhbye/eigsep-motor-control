@@ -44,12 +44,12 @@ while True:
         if az_reverse.is_set():
             logging.info("Reversing az motor.")
             motor.reverse("az")
-            time.sleep(1) #XXX
+            pot.reset_volt_readings()
             az_reverse.clear()
         if alt_reverse.is_set():
             logging.info("Reversing alt motor.")
             motor.reverse("alt")
-            time.sleep(1) #XXX
+            pot.reset_volt_readings()
             alt_reverse.clear()
         time.sleep(0.1)
         continue
