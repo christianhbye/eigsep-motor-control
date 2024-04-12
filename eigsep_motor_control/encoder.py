@@ -41,7 +41,7 @@ class Potentiometer:
         self.ser.reset_input_buffer()
 
         # voltage range of the pots
-        self.VOLT_RANGE = {"az": (0.7, 1.5), "alt": (0.7, 1.7)}
+        self.VOLT_RANGE = {"az": (0.7, 1.5), "alt": (0.7, 2.7)}
 
         # voltage measurements (az, alt)
         size = 5  # number of measurements to store XXX
@@ -100,7 +100,7 @@ class Potentiometer:
         """
         for i in range(self.volts.shape[0]):
             _ = self.read_volts()
-            time.sleep(0.05)
+            time.sleep(0.1)
 
     def monitor(self, az_event, alt_event):
         names = ("az", "alt")
@@ -118,6 +118,9 @@ class Potentiometer:
                 if d > 0 and volts[i] >= vmax:
                     logging.warning(f"Pot {names[i]} at max voltage.")
                     events[i].set()
+                    self.reset_volt_readings()
                 elif d < 0 and volts[i] <= vmin:
                     logging.warning(f"Pot {names[i]} at min voltage.")
                     events[i].set()
+                    self.reset_volt_readings()
+            #time.sleep(0.5)
