@@ -39,8 +39,13 @@ logging.info(f"Starting motors with speeds: az={AZ_VEL}, alt={ALT_VEL}.")
 motor = emc.Motor()
 motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
 
+az_limit = Event()
+alt_limit = Event()
+limits = (az_event, alt_event)
+
 while True:
     try:
+        emc.reverse_limit(motor, pot, limits)
         if az_reverse.is_set():
             logging.info("Reversing az motor.")
             motor.reverse("az")
