@@ -41,7 +41,7 @@ motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
 
 az_limit = Event()
 alt_limit = Event()
-limits = (az_event, alt_event)
+limits = (az_limit, alt_limit)
 
 while True:
     try:
