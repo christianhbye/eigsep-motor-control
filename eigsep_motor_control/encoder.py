@@ -59,7 +59,8 @@ class Potentiometer:
         # of direction quickly enough
         d = {}
         for k, v in self.vdiff.items():
-            d[k] = np.sign(np.mean(v))
+            x = np.sign(np.mean(v))
+            d[k] = x if x == 1 else 0
         return d
 
     def bit2volt(self, analog_value):
