@@ -1,6 +1,5 @@
 import numpy as np
 from qwiic_scmd import QwiicScmd
-from eigsep_motor_control import Potentiometer
 
 MOTOR_ID = {"az": 0, "alt": 1}
 
