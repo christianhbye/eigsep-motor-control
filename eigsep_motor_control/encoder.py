@@ -41,7 +41,7 @@ class Potentiometer:
         self.ser.reset_input_buffer()
 
         # voltage range of the pots
-        self.VOLT_RANGE = {"az": (0.7, 1.5), "alt": (0.7, 2.7)}
+        self.VOLT_RANGE = {"az": (0, 5), "alt": (0.7, 2.7)}
 
         # voltage measurements (az, alt)
         size = 5  # number of measurements to store XXX
@@ -59,7 +59,8 @@ class Potentiometer:
         # of direction quickly enough
         d = {}
         for k, v in self.vdiff.items():
-            d[k] = np.sign(np.mean(v))
+            x = np.sign(np.mean(v))
+            d[k] = x if x == 1 else 0
         return d
 
     def bit2volt(self, analog_value):
