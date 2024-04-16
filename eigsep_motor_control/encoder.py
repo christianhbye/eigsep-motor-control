@@ -41,7 +41,7 @@ class Potentiometer:
         self.ser.reset_input_buffer()
 
         # voltage range of the pots
-        self.VOLT_RANGE = {"az": (0.7, 1.5), "alt": (0.7, 2.7)}
+        self.VOLT_RANGE = {"az": (0.7, 1.5), "alt": (0.7, 1.5)}
 
         # voltage measurements (az, alt)
         size = 5  # number of measurements to store XXX
