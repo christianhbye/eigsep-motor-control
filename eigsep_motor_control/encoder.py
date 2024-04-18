@@ -41,10 +41,10 @@ class Potentiometer:
         self.ser.reset_input_buffer()
 
         # voltage range of the pots
-        self.VOLT_RANGE = {"az": (0.7, 1.5), "alt": (0.7, 1.5)}
+        self.VOLT_RANGE = {"az": (0.3, 2.5), "alt": (0.3, 2.5)}
 
         # voltage measurements (az, alt)
-        size = 5  # number of measurements to store XXX
+        size = 3  # number of measurements to store XXX
         self.volts = np.zeros((size, 2))
         self.reset_volt_readings()
 
@@ -100,7 +100,7 @@ class Potentiometer:
         """
         for i in range(self.volts.shape[0]):
             _ = self.read_volts()
-            time.sleep(0.1)
+            time.sleep(0.05)
 
     def monitor(self, az_event, alt_event):
         names = ("az", "alt")
