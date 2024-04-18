@@ -60,7 +60,7 @@ class Potentiometer:
         d = {}
         for k, v in self.vdiff.items():
             x = np.sign(np.mean(v))
-            d[k] = x if x == 1 else 0
+            d[k] = (x + 1) // 2  # 1 if x == 1, 0 if x == -1
         return d
 
     def bit2volt(self, analog_value):
@@ -124,4 +124,4 @@ class Potentiometer:
                     logging.warning(f"Pot {names[i]} at min voltage.")
                     events[i].set()
                     self.reset_volt_readings()
-            #time.sleep(0.5)
+            # time.sleep(0.5)

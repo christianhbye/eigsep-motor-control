@@ -52,13 +52,13 @@ try:
             logging.info("Reversing az motor.")
             motor.reverse("az")
             time.sleep(0.25)
-            #pot.reset_volt_readings()
+            # pot.reset_volt_readings()
             az_reverse.clear()
         if alt_reverse.is_set():
             logging.info("Reversing alt motor.")
             motor.reverse("alt")
             time.sleep(0.25)
-            #pot.reset_volt_readings()
+            # pot.reset_volt_readings()
             alt_reverse.clear()
         time.sleep(0.1)
 except KeyboardInterrupt:
