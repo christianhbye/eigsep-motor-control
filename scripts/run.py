@@ -24,8 +24,6 @@ az_reverse = Event()
 alt_reverse = Event()
 if args.pot:
     pot = emc.Potentiometer()
-    pot.reset_volt_readings()
-    time.sleep(3)
     # create events that tells motors to reverse direction
     # thread monitoring potentiometer voltage and setting events
     thd = Thread(
@@ -41,9 +39,8 @@ logging.info(f"Starting motors with speeds: az={AZ_VEL}, alt={ALT_VEL}.")
 motor = emc.Motor()
 motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
 
-az_limit = Event()
-alt_limit = Event()
-limits = [az_limit, alt_limit]
+
+limits = [Event(), Event()]
 
 try:
     while True:
