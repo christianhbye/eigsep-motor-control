@@ -15,16 +15,18 @@ def limit_switch(motor, m, pot):
 
     if az_vel == 0 & alt_vel == 0:
         return False
-
-    # pot.reset_volt_readings()
-    # time.sleep(3)
-    # print(pot.direction[motor], az_dir)
-    if pot.direction[motor] == az_dir:
-        return False
-    if pot.direction[motor] != az_dir:
-        return True
-
-
+    
+    if motor == "az":
+        if pot.direction[motor] == az_dir:
+            return False
+        if pot.direction[motor] != az_dir:
+            return True
+    if motor == "alt":
+        if pot.direction[motor] == alt_dir:
+            return False
+        if pot.direction[motor] != alt_dir:
+            return True
+        
 def reverse_limit(m, pot, limits):
     # print(limit_switch("az", m, pot))
     for motor, limit in zip(["az", "alt"], limits):
@@ -33,6 +35,8 @@ def reverse_limit(m, pot, limits):
             limit.set()
         elif not limit_switch(motor, m, pot) and limit.is_set():
             m.reverse(motor)
-            time.sleep(10)  # XXX
+            time.sleep(1)  # XXX
             limit.clear()
+            while limit_switch(motor, m, pot):
+                continue
     return limits
