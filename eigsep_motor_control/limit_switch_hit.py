@@ -21,7 +21,7 @@ def limit_switch(motor, m, pot):
             return False
         if pot.direction[motor] != az_dir:
             return True
-    if motor == "alt":
+    elif motor == "alt":
         if pot.direction[motor] == alt_dir:
             return False
         if pot.direction[motor] != alt_dir:
