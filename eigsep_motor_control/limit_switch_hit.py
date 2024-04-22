@@ -3,30 +3,13 @@ import time
 
 def limit_switch(motor, m, pot):
 
-    az_vel = 0
-    alt_vel = 0
-
-    if motor == "az":
-        az_dir, az_vel = m.velocities["az"]
-    elif motor == "alt":
-        alt_dir, alt_vel = m.velocities["alt"]
-    else:
-        raise ValueError("Invalid motor.")
-
-    if az_vel == 0 & alt_vel == 0:
+    direction, velocity = m.velocities[motor]
+    if velocity == 0:
         return False
-    
-    if motor == "az":
-        if pot.direction[motor] == az_dir:
-            return False
-        if pot.direction[motor] != az_dir:
-            return True
-    elif motor == "alt":
-        if pot.direction[motor] == alt_dir:
-            return False
-        if pot.direction[motor] != alt_dir:
-            return True
-        
+
+    return pot.direction[motor] != direction
+
+
 def reverse_limit(m, pot, limits):
     # print(limit_switch("az", m, pot))
     for motor, limit in zip(["az", "alt"], limits):
