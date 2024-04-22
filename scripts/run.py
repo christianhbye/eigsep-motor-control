@@ -20,11 +20,11 @@ AZ_VEL = args.az if args.az else 0
 ALT_VEL = args.el if args.el else 0
 
 # monitor potentiometer
+# create events that tells motors to reverse direction
 az_reverse = Event()
 alt_reverse = Event()
 if args.pot:
     pot = emc.Potentiometer()
-    # create events that tells motors to reverse direction
     # thread monitoring potentiometer voltage and setting events
     thd = Thread(
         target=pot.monitor, args=(az_reverse, alt_reverse), daemon=True
@@ -40,7 +40,7 @@ motor = emc.Motor()
 motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
 
 
-limits = [Event(), Event()]
+limits = [Event(), Event()]  # events indicating limit switches are hit
 
 try:
     while True:
