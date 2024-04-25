@@ -8,16 +8,23 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 parser = ArgumentParser(description="Control the motors")
-parser.add_argument("-a", "--az", type=int, help="Azimuth motor velocity")
-parser.add_argument("-e", "--el", type=int, help="Elevation motor velocity")
+parser.add_argument(
+    "-a", "--az", type=int, default=0, help="Azimuth motor velocity"
+)
+parser.add_argument(
+    "-e", "--el", type=int, default=0, help="Elevation motor velocity"
+)
 parser.add_argument(
     "-p", "--pot", action="store_true", help="Monitor potentiometer"
+)
+parser.add_argument(
+    "-l", "--lim", action="store_true", help="Monitor limit switches"
 )
 args = parser.parse_args()
 
 # motor velocities
-AZ_VEL = args.az if args.az else 0
-ALT_VEL = args.el if args.el else 0
+AZ_VEL = args.az
+ALT_VEL = args.el
 
 # monitor potentiometer
 # create events that tells motors to reverse direction
@@ -39,12 +46,13 @@ logging.info(f"Starting motors with speeds: az={AZ_VEL}, alt={ALT_VEL}.")
 motor = emc.Motor()
 motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
 
-
-limits = [Event(), Event()]  # events indicating limit switches are hit
+if args.lim:
+    limits = [Event(), Event()]  # events indicating limit switches are hit
 
 try:
     while True:
-        limits = emc.reverse_limit(motor, pot, limits)
+        if args.lim:
+            limits = emc.reverse_limit(motor, pot, limits)
         if az_reverse.is_set():
             logging.info("Reversing az motor.")
             motor.reverse("az")
