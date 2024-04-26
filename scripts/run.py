@@ -64,17 +64,19 @@ try:
             # If 10 consecutive no-movement readings are detected, attempt to reverse motors.
             if pot_zero_count == 10: 
                 if not pot_zero_reversed:
-                    logging.info("No movement detected from az motor. Reversing az motor.")
+                    logging.info("No movement detected from either motor.")
+                    logging.info("Reversing az motor.")
                     motor.reverse("az")
                     time.sleep(0.25)
-                    logging.info("No movement detected form alt motor. Reversing alt motor.")
+                    logging.info("Reversing az motor.")
                     motor.reverse("alt")
                     time.sleep(0.25)
                     pot_zero_reversed = True
                     pot_zero_count = 0
                 else: 
                     # Stop the program after a second set of 10 no-movement readings post-reversal.
-                    logging.info("No movement detected from motors. Exiting.")
+                    logging.info("No movement detected from either motor after attempted reversal.")
+                    logging.info("Exiting.")
                     break
             # Check and handle limit switch events.
             if args.lim:
@@ -86,7 +88,7 @@ try:
             time.sleep(0.25)
             az_reverse.clear()
         if alt_reverse.is_set():
-            logging.info("Reversing alt motor.")
+            logging.info("Reversing az motor.")
             motor.reverse("alt")
             time.sleep(0.25)
             alt_reverse.clear()
