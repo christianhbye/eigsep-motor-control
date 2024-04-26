@@ -88,7 +88,7 @@ try:
             time.sleep(0.25)
             az_reverse.clear()
         if alt_reverse.is_set():
-            logging.info("Reversing az motor.")
+            logging.info("Reversing alt motor.")
             motor.reverse("alt")
             time.sleep(0.25)
             alt_reverse.clear()
