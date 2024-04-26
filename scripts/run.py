@@ -68,7 +68,7 @@ try:
                     logging.info("Reversing az motor.")
                     motor.reverse("az")
                     time.sleep(0.25)
-                    logging.info("Reversing az motor.")
+                    logging.info("Reversing alt motor.")
                     motor.reverse("alt")
                     time.sleep(0.25)
                     pot_zero_reversed = True
