@@ -1,8 +1,9 @@
 from argparse import ArgumentParser
 import logging
 import time
-    from threading import Event, Thread
+from threading import Event, Thread
 import eigsep_motor_control as emc
+start_time = time.time()
 
 # Setup logging for information and debugging.
 logger = logging.getLogger(__name__)
@@ -98,6 +99,8 @@ except KeyboardInterrupt:
     logging.info("Exiting.")
 finally:
     # Ensure motors are stopped on exit.
+    current_time = time.time()
+    logging.info(f"Run Time: {current_time-start_time} seconds, {(current_time-start_time)/3600} hours.")
     motor.stop()
 
 # motor.stow(motors=["az", "alt"])
