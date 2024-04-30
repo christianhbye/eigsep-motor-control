@@ -2,6 +2,7 @@ import logging
 import numpy as np
 import serial
 import time
+from threading import Event
 from qwiic_dual_encoder_reader import QwiicDualEncoderReader
 from eigsep_motor_control.motor import MOTOR_ID
 from eigsep_motor_control.serial_params import BAUDRATE, INT_LEN
@@ -50,6 +51,7 @@ class Potentiometer:
         # voltage range of the pots
         self.VOLT_RANGE = {"az": (0.3, 2.5), "alt": (1.0, 2.25)}
         self.POT_ZERO_THRESHOLD = 0.1
+        self.read_event = Event()
 
         # voltage measurements (az, alt)
         size = 3  # number of measurements to store XXX
@@ -185,3 +187,5 @@ class Potentiometer:
                     logging.warning(f"Pot {names[i]} at min voltage.")
                     events[i].set()
                     self.reset_volt_readings()
+            self.read_event.set()  # Signal that new readings are available
+            self.read_event.clear()
