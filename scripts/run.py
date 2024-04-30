@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 import logging
 import time
-from threading import Event, Thread
+    from threading import Event, Thread
 import eigsep_motor_control as emc
 
 # Setup logging for information and debugging.
@@ -57,6 +57,7 @@ try:
     while True:
         if args.pot:
             # Check if both motors show no movement and update the count.
+            pot.read_event.wait()
             if pot.direction["az"] == 0 and pot.direction["alt"] == 0:
                 pot_zero_count += 1
             else:
