@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 import logging
 import time
-    from threading import Event, Thread
+from threading import Event, Thread
 import eigsep_motor_control as emc
 
 # Setup logging for information and debugging.
@@ -46,7 +46,7 @@ else:
 
 # Start the motors with the specified velocities.
 logging.info(f"Starting motors with speeds: az={AZ_VEL}, alt={ALT_VEL}.")
-motor = emc.Motor()
+motor = emc.QwiicMotor()
 motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
 
 # Initialize limit switch events if monitoring is enabled.
