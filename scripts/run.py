@@ -22,6 +22,12 @@ parser.add_argument(
 parser.add_argument(
     "-l", "--lim", action="store_true", help="Monitor limit switches"
 )
+parser.add_argument(
+    "-qm", "--qwiic", action="store_true", help="Using qwiic motors"
+)
+parser.add_argument(
+    "-pm", "--polulu", action="store_true", help="Using polulu motors"
+)
 args = parser.parse_args()
 
 # Setting initial motor velocities from parsed arguments.
@@ -46,7 +52,14 @@ else:
 
 # Start the motors with the specified velocities.
 logging.info(f"Starting motors with speeds: az={AZ_VEL}, alt={ALT_VEL}.")
-motor = emc.QwiicMotor()
+if args.qwiic and not args.polulu:
+    motor = emc.QwiicMotor()
+elif args.polulu and not args.qwiic:
+    motor = emc.PoluluMotor()
+else:
+    logging.info("No valid motor argument given or too many motor arguments given.")
+    logging.info("Exiting.")
+    exit
 motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
 
 # Initialize limit switch events if monitoring is enabled.
