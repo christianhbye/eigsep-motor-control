@@ -186,3 +186,5 @@ class Potentiometer:
                     logging.warning(f"Pot {names[i]} at min voltage.")
                     events[i].set()
                     self.reset_volt_readings()
+            self.read_event.set()  # Signal that new readings are available
+            self.read_event.clear()
