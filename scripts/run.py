@@ -34,7 +34,6 @@ az_reverse = Event()
 alt_reverse = Event()
 if args.pot:
     pot = emc.Potentiometer()
-    pot_zero_count = 0 # Counter for consecutive zero-movement readings.
     pot_zero_reversed = False # Flag to track if reversal action has been taken.
     # Create and start a separate thread to monitor potentiometer if enabled.
     thd = Thread(
@@ -53,18 +52,19 @@ motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
 # Initialize limit switch events if monitoring is enabled.
 if args.lim:
     limits = [Event(), Event()]  # Events indicating limit switches are triggered.
-
+check_time = time.time()
 try:
     while True:
         if args.pot:
             # Check if both motors show no movement and update the count.
-            pot.read_event.wait()
             if pot.direction["az"] == 0 and pot.direction["alt"] == 0:
-                pot_zero_count += 1
+                pass
             else:
-                pot_zero_count = 0
+                if pot_zero_reversed:
+                    pot_zero_reversed = False
+                check_time = time.time()
             # If 10 consecutive no-movement readings are detected, attempt to reverse motors.
-            if pot_zero_count == 10: 
+            if time.time() >= check_time+10: 
                 if not pot_zero_reversed:
                     logging.info("No movement detected from either motor.")
                     logging.info("Reversing az motor.")
@@ -74,7 +74,7 @@ try:
                     motor.reverse("alt")
                     time.sleep(0.25)
                     pot_zero_reversed = True
-                    pot_zero_count = 0
+                    check_time = time.time()
                 else: 
                     # Stop the program after a second set of 10 no-movement readings post-reversal.
                     logging.info("No movement detected from either motor after attempted reversal.")
@@ -99,8 +99,8 @@ except KeyboardInterrupt:
     logging.info("Exiting.")
 finally:
     # Ensure motors are stopped on exit.
-    current_time = time.time()
-    logging.info(f"Run Time: {current_time-start_time} seconds, {(current_time-start_time)/3600} hours.")
+    final_time = time.time()
+    logging.info(f"Run Time: {final_time-start_time} seconds, {(final_time-start_time)/3600} hours.")
     motor.stop()
 
 # motor.stow(motors=["az", "alt"])
