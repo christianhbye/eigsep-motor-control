@@ -21,8 +21,10 @@ class Motor(QwiicScmd):
         # current velocities of the form (direction, speed):
         self.velocities = {"az": (0, 0), "alt": (0, 0)}
         self.debounce_interval = 5  # debounce interval in seconds
-        self.last_reversal_time = {'az': -5, 'alt': -5}  # last reversal timestamps for motors
-
+        self.last_reversal_time = {
+            "az": -5,
+            "alt": -5,
+        }  # last reversal timestamps for motors
 
     def start(self, az_vel=254, alt_vel=254):
         """
@@ -52,7 +54,7 @@ class Motor(QwiicScmd):
     def should_reverse(self, motor):
         """
         Check if enough time has passed since the last reversal.
-        
+
         Parameters
         ----------
         motor : str
@@ -67,7 +69,10 @@ class Motor(QwiicScmd):
 
         """
         current_time = time.time()
-        if current_time - self.last_reversal_time[motor] > self.debounce_interval:
+        if (
+            current_time - self.last_reversal_time[motor]
+            > self.debounce_interval
+        ):
             return True
         return False
 
@@ -84,14 +89,13 @@ class Motor(QwiicScmd):
         """
         if self.should_reverse(motor):
             d, s = self.velocities[motor]
-            reverse_dir = -1*d  # turn -1 to 1 and vice versa
+            reverse_dir = -1 * d  # turn -1 to 1 and vice versa
             direction = 1 if reverse_dir > 0 else 0
             self.set_drive(MOTOR_ID[motor], direction, s)
             self.last_reversal_time[motor] = time.time()
             self.velocities[motor] = (reverse_dir, s)
         else:
             print(f"Debounce active. Skipping reversal for {motor}.")
-
 
     def stop(self, motors=["az", "alt"]):
         """

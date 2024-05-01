@@ -2,7 +2,6 @@ import logging
 import numpy as np
 import serial
 import time
-from threading import Event
 from qwiic_dual_encoder_reader import QwiicDualEncoderReader
 from eigsep_motor_control.motor import MOTOR_ID
 from eigsep_motor_control.serial_params import BAUDRATE, INT_LEN
@@ -60,7 +59,14 @@ class Potentiometer:
     @property
     def vdiff(self):
         """
-        Finds the difference between the last {size} voltage readings of each pot.
+        Find the difference between the last ``self.size'' voltage readings
+        of each pot.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the differences in voltage readings between
+            the last two measurements for each pot. Keys are 'az' and 'alt'.
 
         """
         az, alt = np.diff(self.volts, axis=0).T
@@ -69,7 +75,8 @@ class Potentiometer:
     @property
     def direction(self):
         """
-        Determines direction of az/alt motors based on last {size} voltage readings of the respective pot.
+        Determines direction of az/alt motors based on last ``self.size''
+        voltage readings of the respective pot.
 
         """
         # XXX might need to adjust the size so that we can pick up change
@@ -77,12 +84,16 @@ class Potentiometer:
         d = {}
         for k, v in self.vdiff.items():
             x = np.mean(v)
-            d[k] = np.sign(x) if np.abs(x) > self.POT_ZERO_THRESHOLD else 0 #return a direction of 1 or 0 only if it is determined to not be stationary
+            # the pot is considered stationary if changes are below threshold
+            if np.abs(x) < self.POT_ZERO_THRESHOLD:
+                d[k] = 0
+            else:
+                d[k] = np.sign(x)
         return d
 
     def bit2volt(self, analog_value):
         """
-        Converts an analog value from digital-to-analog converter (DAC) units to volts.
+        Converts an analog value from bits to volts.
 
         Parameters
         -------
@@ -92,11 +103,11 @@ class Potentiometer:
         Returns
         -------
         voltage : float
-            The calculated voltage corresponding to the given digital value.
+            The calculated voltage corresponding to the bit number.
 
         """
         res = 2**self.NBITS - 1
-        voltage = (self.VMAX / res)*analog_value
+        voltage = (self.VMAX / res) * analog_value
         return voltage
 
     def read_analog(self):
@@ -117,18 +128,21 @@ class Potentiometer:
 
     def read_volts(self, motor=None):
         """
-        Reads the current voltage from an analog sensor, converts it to volts, and updates the internal voltage history.
+        Read the current voltage from an analog sensor, converts it to volts,
+        and updates the internal voltage history.
 
         Parameters
         -------
         motor : str, optional
-            The motor identifier ('az' for azimuth or 'alt' for altitude) for which the voltage
-            is to be returned. If no motor is specified, the voltage for all motors is returned.
+            The motor identifier ('az' for azimuth or 'alt' for altitude) for
+            which the voltage is to be returned. If no motor is specified, the
+            voltage for both motors is returned.
 
         Returns
         -------
-        v : float/np.ndarray
-            The voltage reading for the specified motor, or an array of voltages if no motor is specified.
+        v : float or np.ndarray
+            The voltage reading for the specified motor, or an array of
+            voltages if ``motor'' is None.
 
         """
         v = self.bit2volt(self.read_analog())
@@ -152,17 +166,17 @@ class Potentiometer:
 
     def monitor(self, az_event, alt_event):
         """
-        Continuously monitors the voltage levels of the 'az' (azimuth) and 'alt' (altitude)
-        motors and checks these against predefined voltage ranges to trigger events if 
-        voltage limits are reached.
+        Continuously monitor the voltage levels of the 'az' (azimuth) and 'alt'
+        (altitude) motors and checks these against predefined voltage ranges to
+        trigger events if voltage limits are reached.
 
         Parameters
-        -------
+        ----------
         az_event : threading.Event
-            An event triggered when the azimuth motor reaches its voltage limit.
+            An event triggered when the azimuth motor reaches its limit.
         alt_event : threading.Event
-            An event triggered when the altitude motor reaches its voltage limit.
-            
+            An event triggered when the altitude motor reaches its limit.
+
         """
         names = ("az", "alt")
         events = (az_event, alt_event)
@@ -176,15 +190,17 @@ class Potentiometer:
                 vmin = self.VOLT_RANGE[names[i]][0]
                 vmax = self.VOLT_RANGE[names[i]][1]
                 d = self.direction[names[i]]
-                # Check if the current voltage exceeds the maximum limit during positive direction.
+                # check if the current voltage exceeds the maximum limit
+                # during positive direction.
                 if d > 0 and volts[i] >= vmax:
                     logging.warning(f"Pot {names[i]} at max voltage.")
                     events[i].set()
                     self.reset_volt_readings()
-                # Check if the current voltage goes below the minimum limit during negative direction.
+                # check if the current voltage goes below the minimum limit
+                # during negative direction.
                 elif d < 0 and volts[i] <= vmin:
                     logging.warning(f"Pot {names[i]} at min voltage.")
                     events[i].set()
                     self.reset_volt_readings()
-            self.read_event.set()  # Signal that new readings are available
+            self.read_event.set()  # signal that new readings are available
             self.read_event.clear()
