@@ -1,6 +1,7 @@
 import numpy as np
 import time
 from qwiic_scmd import QwiicScmd
+
 try:
     from dual_max14870_rpi import motors, MAX_SPEED
 except ImportError:
@@ -10,11 +11,15 @@ from abc import ABC, abstractmethod
 
 MOTOR_ID = {"az": 0, "alt": 1}
 
+
 class Motor(ABC):
     def __init__(self):
         self.velocities = {"az": (0, 0), "alt": (0, 0)}
         self.debounce_interval = 5  # debounce interval in seconds
-        self.last_reversal_time = {'az': -5, 'alt': -5}  # last reversal timestamps for motors
+        self.last_reversal_time = {
+            "az": -5,
+            "alt": -5,
+        }  # last reversal timestamps for motors
 
     @abstractmethod
     def start(self, az_vel, alt_vel):
@@ -24,7 +29,10 @@ class Motor(ABC):
     def should_reverse(self, motor):
         """Determine if the motor should reverse."""
         current_time = time.time()
-        if current_time - self.last_reversal_time[motor] > self.debounce_interval:
+        if (
+            current_time - self.last_reversal_time[motor]
+            > self.debounce_interval
+        ):
             return True
         return False
 
@@ -43,6 +51,7 @@ class Motor(ABC):
         """Stow the specified motors (typically return to a safe position)."""
         pass
 
+
 class QwiicMotor(Motor, QwiicScmd):
     def __init__(self):
         Motor.__init__(self)  # Initialize Motor attributes
@@ -53,7 +62,7 @@ class QwiicMotor(Motor, QwiicScmd):
             self.set_drive(i, 0, 0)
 
     def start(self, az_vel=254, alt_vel=254):
-        """Starts both motors (azimuth and altitude) with the given velocities."""
+        """Starts both motors with the given velocities."""
         velocities = {"az": az_vel, "alt": alt_vel}
         for m, v in velocities.items():
             speed = np.abs(v)
@@ -85,12 +94,13 @@ class QwiicMotor(Motor, QwiicScmd):
         """Stow method for returning motors to a home position."""
         raise NotImplementedError("Stow method not implemented.")
 
+
 class PoluluMotor(Motor):
     def __init__(self):
         super().__init__()
 
     def start(self, az_vel=MAX_SPEED, alt_vel=MAX_SPEED):
-        """Starts both motors (azimuth and altitude) with the given velocities."""
+        """Starts both motors with the given velocities."""
         az_direction = 1 if az_vel > 0 else 0
         alt_direction = 1 if alt_vel > 0 else 0
         motors.setSpeeds(az_vel, alt_vel)
@@ -103,7 +113,9 @@ class PoluluMotor(Motor):
             if motor in self.velocities:
                 current_direction, current_speed = self.velocities[motor]
                 new_direction = 0 if current_direction == 1 else 1
-                new_speed = -current_speed if current_direction == 1 else current_speed
+                new_speed = (
+                    -current_speed if current_direction == 1 else current_speed
+                )
                 if motor == "az":
                     motors.motor1.setSpeed(new_speed)  # motor1 for azimuth
                 elif motor == "alt":
@@ -114,7 +126,7 @@ class PoluluMotor(Motor):
         """Stops specified motors (azimuth and/or altitude)."""
         for motor in motors:
             if motor == "az":
-               motors.motor1.setSpeed(0)
+                motors.motor1.setSpeed(0)
             elif motor == "alt":
                 motors.motor2.setSpeed(0)
             self.velocities[motor] = (self.velocities[motor][0], 0)
@@ -122,4 +134,3 @@ class PoluluMotor(Motor):
     def stow(self):
         """Stow method for returning motors to a home position."""
         raise NotImplementedError("Stow method not implemented.")
-    

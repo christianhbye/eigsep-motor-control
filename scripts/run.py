@@ -69,7 +69,9 @@ if args.qwiic and not args.polulu:
 elif args.polulu and not args.qwiic:
     motor = emc.PoluluMotor()
 else:
-    logging.info("No valid motor argument given or too many motor arguments given.")
+    logging.info(
+        "No valid motor argument given or too many motor arguments given."
+    )
     logging.info("Exiting.")
     exit
 motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
