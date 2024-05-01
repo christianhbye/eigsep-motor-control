@@ -48,8 +48,8 @@ class Potentiometer:
         self.ser.reset_input_buffer()
 
         # voltage range of the pots
-        self.VOLT_RANGE = {"az": (0.3, 2.5), "alt": (1.0, 2.25)}
-        self.POT_ZERO_THRESHOLD = 0.03
+        self.VOLT_RANGE = {"az": (0.3, 2.5), "alt": (1., 2.)}
+        self.POT_ZERO_THRESHOLD = 0.005
 
         # voltage measurements (az, alt)
         size = 3  # number of measurements to store XXX
@@ -164,15 +164,13 @@ class Potentiometer:
             _ = self.read_volts()
             time.sleep(0.05)
 
-    def _trigger_reverse(self, event, motor, volt_reading):
+    def _trigger_reverse(self, motor, volt_reading):
         """
         Continuously monitor the voltage levels of one pot to see if motor
         reaches its limit.
 
         Parameters
         ----------
-        event : threading.Event
-            Event to be triggered when the motor reaches its limit.
         motor : str
             The motor to monitor. Either 'az' or 'alt'.
         volt_reading : float
@@ -181,18 +179,15 @@ class Potentiometer:
         """
         vmin, vmax = self.VOLT_RANGE[motor]
         d = self.direction[motor]
-        # check if the current voltage exceeds the maximum limit
-        # during positive direction.
+        # check if the current voltage is outside the limits
         if d > 0 and volt_reading >= vmax:
             logging.warning(f"Pot {motor} at max voltage.")
-            event.set()
-            self.reset_volt_readings()
-        # check if the current voltage goes below the minimum limit
-        # during negative direction.
+            return True
         elif d < 0 and volt_reading <= vmin:
             logging.warning(f"Pot {motor} at min voltage.")
-            event.set()
-            self.reset_volt_readings()
+            return True
+        else:
+            return False
 
     def monitor(self, az_event, alt_event):
         """
@@ -221,12 +216,10 @@ class Potentiometer:
             return
 
         while True:
-            volts = self.read_volts()
-            msg = ""
-            for m, v in zip(names, volts):
-                msg += f"{m}: {v:.3f} V "
-            print(msg)
-            for m, event, v in zip(names, events, volts):
-                self._trigger_reverse(event, m, v)
-            self.read_event.set()  # signal that new readings are available
-            self.read_event.clear()
+            for m, event in zip(names, events):
+                v = self.read_volts(motor=m)
+                print(f"{m}: {v:.3f} V ")
+                trigger = self._trigger_reverse(m, v)
+                if trigger:
+                    event.set()
+                    # self.reset_volt_readings()
