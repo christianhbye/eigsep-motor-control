@@ -50,7 +50,7 @@ class Potentiometer:
 
         # voltage range of the pots
         self.VOLT_RANGE = {"az": (0.3, 2.5), "alt": (1.0, 2.25)}
-        self.POT_ZERO_THRESHOLD = 0.1
+        self.POT_ZERO_THRESHOLD = 0.03
         self.read_event = Event()
 
         # voltage measurements (az, alt)
