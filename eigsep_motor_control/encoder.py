@@ -222,4 +222,4 @@ class Potentiometer:
                 trigger = self._trigger_reverse(m, v)
                 if trigger:
                     event.set()
-                    self.reset_volt_readings()
+                    # self.reset_volt_readings()
