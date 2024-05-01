@@ -1,7 +1,10 @@
 import numpy as np
 import time
 from qwiic_scmd import QwiicScmd
-from dual_max14870_rpi import motors, MAX_SPEED
+try:
+    from dual_max14870_rpi import motors, MAX_SPEED
+except ImportError:
+    pass
 from abc import ABC, abstractmethod
 
 MOTOR_ID = {"az": 0, "alt": 1}
