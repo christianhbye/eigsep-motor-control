@@ -1,4 +1,5 @@
 import numpy as np
+import time
 from qwiic_scmd import QwiicScmd
 
 MOTOR_ID = {"az": 0, "alt": 1}
@@ -19,6 +20,11 @@ class Motor(QwiicScmd):
         self.enable()
         # current velocities of the form (direction, speed):
         self.velocities = {"az": (0, 0), "alt": (0, 0)}
+        self.debounce_interval = 5  # debounce interval in seconds
+        self.last_reversal_time = {
+            "az": -5,
+            "alt": -5,
+        }  # last reversal timestamps for motors
 
     def start(self, az_vel=254, alt_vel=254):
         """
@@ -42,22 +48,54 @@ class Motor(QwiicScmd):
                 continue
             direction = 1 if v > 0 else 0
             self.set_drive(MOTOR_ID[m], direction, speed)
-            self.velocities[m] = (direction, speed)
+            conventional_direction = 1 if direction == 1 else -1
+            self.velocities[m] = (conventional_direction, speed)
 
-    def reverse(self, motor):
+    def should_reverse(self, motor):
         """
-        Reverse one of the motors.
+        Check if enough time has passed since the last reversal.
 
         Parameters
         ----------
         motor : str
-            Indicate which motor to reverse. Must be ``az'' or ``alt''.
+            The motor to reverse. Valid names are ``az'' and ``alt'' for the
+            azimuth and altitude motors, respectively.
+
+        Returns
+        -------
+        bool
+            Returns True if enough time has passed since last reversal, False
+            otherwise.
 
         """
-        d, s = self.velocities[motor]
-        reverse_dir = (d + 1) % 2  # turn 0 to 1 and vice versa
-        self.set_drive(MOTOR_ID[motor], reverse_dir, s)
-        self.velocities[motor] = (reverse_dir, s)
+        current_time = time.time()
+        if (
+            current_time - self.last_reversal_time[motor]
+            > self.debounce_interval
+        ):
+            return True
+        return False
+
+    def reverse(self, motor):
+        """
+        Reverse one of the motors. If debounce is active, ignore.
+
+        Parameters
+        ----------
+        motors : str
+            The motor to reverse. Valid names are ``az'' and ``alt'' for the
+            azimuth and altitude motors, respectively.
+
+        """
+        if self.should_reverse(motor):
+            d, s = self.velocities[motor]
+            reverse_dir = -1 * d  # turn -1 to 1 and vice versa
+            direction = 1 if reverse_dir > 0 else 0
+            self.set_drive(MOTOR_ID[motor], direction, s)
+            self.last_reversal_time[motor] = time.time()
+            self.velocities[motor] = (reverse_dir, s)
+        else:
+            print(f"Debounce active. Skipping reversal for {motor}.")
 
     def stop(self, motors=["az", "alt"]):
         """

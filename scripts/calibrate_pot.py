@@ -15,7 +15,8 @@ def calibrate(motor, direction):
         Motor to calibrate. Either 'az' or 'alt'.
     direction : int
         Direction of the motor. 1 for forward (increasing pot voltages),
-        -1 for reverse (decreasing pot voltages).
+        0 for reverse (decreasing pot voltages). This convention aligns with
+        the motor control module and imported libraries.
 
     Returns
     -------
@@ -36,8 +37,9 @@ def calibrate(motor, direction):
     else:
         raise ValueError("Invalid motor.")
 
-    az_vel *= direction
-    alt_vel *= direction
+    if direction == 0:
+        az_vel = -az_vel
+        alt_vel = -alt_vel
 
     m = emc.Motor()
     pot = emc.Potentiometer()
@@ -55,7 +57,7 @@ def calibrate(motor, direction):
         print("Interrupting.")
         m.stop()
     # get the extremum pot voltage (max if forward, min if reverse)
-    vm = np.max(direction * pot.volts[:, motor_id])
+    vm = np.max(np.abs(pot.volts[:, motor_id]))
 
     # now: either the pot is stuck or the switch is triggered
     # this loops runs as long as the pot is stuck
@@ -108,7 +110,7 @@ if __name__ == "__main__":
         print("")
         if not stuck:
             print("Didn't get pot stuck, calibrate opposite direction.")
-            vm, stuck = calibrate(motor, -1)
+            vm, stuck = calibrate(motor, 0)
             print(f"Min voltage: {vm}")
             print(f"Stuck: {stuck}")
             print("")
