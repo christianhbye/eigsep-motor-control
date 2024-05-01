@@ -85,26 +85,26 @@ try:
                 )
                 break
 
-            # check and handle limit switch events.
+            # check and handle limit switch events
             limits = emc.reverse_limit(motor, pot, limits)
 
         # Check and react to reverse signals set by potentiometer monitoring.
         for name, event in zip(["az", "alt"], reverse_events):
             if event is None:
                 continue
-            elif event.is_set():
-                logging.info(f"Reversing {name} motor.")
+            if event.is_set():
+                print(f"Reversing {name} motor.")
                 motor.reverse(name)
-                time.sleep(0.25)
+                time.sleep(0.5)
                 event.clear()
 
         time.sleep(0.1)
 except KeyboardInterrupt:
-    logging.info("Exiting.")
+    print("\nExiting.")
 finally:
     # ensure motors are stopped on exit.
     run_time = time.time() - start_time
-    logging.info(f"Run Time: {run_time} seconds, {run_time/3600} hours.")
+    print(f"Run Time: {run_time} seconds, {run_time/3600} hours.")
     motor.stop()
 
 # motor.stow(motors=["az", "alt"])
