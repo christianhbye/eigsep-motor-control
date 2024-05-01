@@ -221,10 +221,7 @@ class Potentiometer:
             return
 
         while True:
-            volts = self.read_volts()
-            msg = ""
-            for m, v in zip(names, volts):
-                msg += f"{m}: {v:.3f} V "
-            print(msg)
-            for m, event, v in zip(names, events, volts):
+            for m, event in zip(names, events):
+                v = self.read_volts(motor=m)
+                print(f"{m}: {v:.3f} V ")
                 self._trigger_reverse(event, m, v)
