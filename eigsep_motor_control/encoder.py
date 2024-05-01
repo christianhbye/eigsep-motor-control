@@ -228,5 +228,3 @@ class Potentiometer:
             print(msg)
             for m, event, v in zip(names, events, volts):
                 self._trigger_reverse(event, m, v)
-            self.read_event.set()  # signal that new readings are available
-            self.read_event.clear()
