@@ -4,6 +4,8 @@ import time
 from threading import Event, Thread
 import eigsep_motor_control as emc
 
+start_time = time.time()
+
 # Setup logging for information and debugging.
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -20,7 +22,10 @@ parser.add_argument(
     "-p", "--pot", action="store_true", help="Monitor potentiometer"
 )
 parser.add_argument(
-    "-l", "--lim", action="store_true", help="Monitor limit switches"
+    "-s",
+    "--safe",
+    action="store_true",
+    help="Monitor pot, limit switch, and check for no movement.",
 )
 parser.add_argument(
     "-qm", "--qwiic", action="store_true", help="Using qwiic motors"
@@ -30,17 +35,24 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+if args.safe:
+    args.pot = True
+
 # Setting initial motor velocities from parsed arguments.
 AZ_VEL = args.az
 ALT_VEL = args.el
 
-# Initialize events for reversing motor direction based on potentiometer monitoring.
-az_reverse = Event()
-alt_reverse = Event()
 if args.pot:
+    # Initialize events for reversing motor direction based on pot monitoring.
+    if AZ_VEL != 0:
+        az_reverse = Event()
+    else:
+        az_reverse = None
+    if ALT_VEL != 0:
+        alt_reverse = Event()
+    else:
+        alt_reverse = None
     pot = emc.Potentiometer()
-    pot_zero_count = 0 # Counter for consecutive zero-movement readings.
-    pot_zero_reversed = False # Flag to track if reversal action has been taken.
     # Create and start a separate thread to monitor potentiometer if enabled.
     thd = Thread(
         target=pot.monitor, args=(az_reverse, alt_reverse), daemon=True
@@ -63,54 +75,50 @@ else:
 motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
 
 # Initialize limit switch events if monitoring is enabled.
-if args.lim:
-    limits = [Event(), Event()]  # Events indicating limit switches are triggered.
+if args.safe:
+    # events indicating limit switches are triggered
+    limits = [Event(), Event()]
 
+last_motion = time.time()  # time of last motor movement
 try:
     while True:
-        if args.pot:
-            # Check if both motors show no movement and update the count.
-            pot.read_event.wait()
-            if pot.direction["az"] == 0 and pot.direction["alt"] == 0:
-                pot_zero_count += 1
-            else:
-                pot_zero_count = 0
-            # If 10 consecutive no-movement readings are detected, attempt to reverse motors.
-            if pot_zero_count == 10: 
-                if not pot_zero_reversed:
-                    logging.info("No movement detected from either motor.")
-                    logging.info("Reversing az motor.")
-                    motor.reverse("az")
-                    time.sleep(0.25)
-                    logging.info("Reversing alt motor.")
-                    motor.reverse("alt")
-                    time.sleep(0.25)
-                    pot_zero_reversed = True
-                    pot_zero_count = 0
-                else: 
-                    # Stop the program after a second set of 10 no-movement readings post-reversal.
-                    logging.info("No movement detected from either motor after attempted reversal.")
-                    logging.info("Exiting.")
-                    break
-            # Check and handle limit switch events.
-            if args.lim:
-                limits = emc.reverse_limit(motor, pot, limits)
+        if not args.pot:  # nothing is happening, there are no safety checks
+            print("...")
+            time.sleep(1)
+            continue
+
+        # else we monitor the potentiometer
+        if args.safe:
+            # check if both motors show no movement
+            if pot.direction["az"] != 0 or pot.direction["alt"] != 0:
+                last_motion = time.time()
+            # no movement detected for 10 seconds
+            elif time.time() >= last_motion + 10:
+                logging.warning(
+                    "No movement detected from either motor. Exiting."
+                )
+                break
+
+            # check and handle limit switch events.
+            limits = emc.reverse_limit(motor, pot, limits)
+
         # Check and react to reverse signals set by potentiometer monitoring.
-        if az_reverse.is_set():
-            logging.info("Reversing az motor.")
-            motor.reverse("az")
-            time.sleep(0.25)
-            az_reverse.clear()
-        if alt_reverse.is_set():
-            logging.info("Reversing alt motor.")
-            motor.reverse("alt")
-            time.sleep(0.25)
-            alt_reverse.clear()
+        for name, event in zip(["az", "alt"], [az_reverse, alt_reverse]):
+            if event is None:
+                continue
+            elif event.is_set():
+                logging.info(f"Reversing {name} motor.")
+                motor.reverse(name)
+                time.sleep(0.25)
+                event.clear()
+
         time.sleep(0.1)
 except KeyboardInterrupt:
     logging.info("Exiting.")
 finally:
-    # Ensure motors are stopped on exit.
+    # ensure motors are stopped on exit.
+    run_time = time.time() - start_time
+    logging.info(f"Run Time: {run_time} seconds, {run_time/3600} hours.")
     motor.stop()
 
 # motor.stow(motors=["az", "alt"])
