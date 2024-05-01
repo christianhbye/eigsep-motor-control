@@ -4,7 +4,8 @@ from qwiic_scmd import QwiicScmd
 try:
     from dual_max14870_rpi import motors, MAX_SPEED
 except ImportError:
-    pass
+    motors = None  # Create a dummy or mock 'motors' if needed
+    MAX_SPEED = 0
 from abc import ABC, abstractmethod
 
 MOTOR_ID = {"az": 0, "alt": 1}
