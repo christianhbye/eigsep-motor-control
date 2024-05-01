@@ -5,7 +5,7 @@ from .encoder import Encoder, Potentiometer
 from .motor import Motor, QwiicMotor
 try: 
     from .motor import PoluluMotor
-except NameError:
+except:
     pass
 from .limit_switch_hit import reverse_limit
 
