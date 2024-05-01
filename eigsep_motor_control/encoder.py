@@ -164,6 +164,36 @@ class Potentiometer:
             _ = self.read_volts()
             time.sleep(0.05)
 
+    def _trigger_reverse(self, event, motor, volt_reading):
+        """
+        Continuously monitor the voltage levels of one pot to see if motor
+        reaches its limit.
+
+        Parameters
+        ----------
+        event : threading.Event
+            Event to be triggered when the motor reaches its limit.
+        motor : str
+            The motor to monitor. Either 'az' or 'alt'.
+        volt_reading : float
+            The current voltage reading of the motor.
+
+        """
+        vmin, vmax = self.VOLT_RANGE[motor]
+        d = self.direction[motor]
+        # check if the current voltage exceeds the maximum limit
+        # during positive direction.
+        if d > 0 and volt_reading >= vmax:
+            logging.warning(f"Pot {motor} at max voltage.")
+            event.set()
+            self.reset_volt_readings()
+        # check if the current voltage goes below the minimum limit
+        # during negative direction.
+        elif d < 0 and volt_reading <= vmin:
+            logging.warning(f"Pot {motor} at min voltage.")
+            event.set()
+            self.reset_volt_readings()
+
     def monitor(self, az_event, alt_event):
         """
         Continuously monitor the voltage levels of the 'az' (azimuth) and 'alt'
@@ -178,29 +208,25 @@ class Potentiometer:
             An event triggered when the altitude motor reaches its limit.
 
         """
-        names = ("az", "alt")
-        events = (az_event, alt_event)
+        names = []
+        events = []
+        if az_event is not None:
+            names.append("az")
+            events.append(az_event)
+        if alt_event is not None:
+            names.append("alt")
+            events.append(alt_event)
+
+        if not names:
+            return
+
         while True:
             volts = self.read_volts()
             msg = ""
             for m, v in zip(names, volts):
                 msg += f"{m}: {v:.3f} V "
             print(msg)
-            for i in range(2):
-                vmin = self.VOLT_RANGE[names[i]][0]
-                vmax = self.VOLT_RANGE[names[i]][1]
-                d = self.direction[names[i]]
-                # check if the current voltage exceeds the maximum limit
-                # during positive direction.
-                if d > 0 and volts[i] >= vmax:
-                    logging.warning(f"Pot {names[i]} at max voltage.")
-                    events[i].set()
-                    self.reset_volt_readings()
-                # check if the current voltage goes below the minimum limit
-                # during negative direction.
-                elif d < 0 and volts[i] <= vmin:
-                    logging.warning(f"Pot {names[i]} at min voltage.")
-                    events[i].set()
-                    self.reset_volt_readings()
+            for m, event, v in zip(names, events, volts):
+                self._trigger_reverse(event, m, v)
             self.read_event.set()  # signal that new readings are available
             self.read_event.clear()
