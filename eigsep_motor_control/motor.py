@@ -1,7 +1,6 @@
 import numpy as np
 import time
 from qwiic_scmd import QwiicScmd
-from abc import ABC, abstractmethod
 
 try:
     from dual_max14870_rpi import motors as polulu_motors, MAX_SPEED
@@ -12,10 +11,8 @@ except ImportError:
 MOTOR_ID = {"az": 0, "alt": 1}
 
 
-class Motor(ABC, QwiicScmd):
+class Motor():
     def __init__(self):
-        super().__init__(address=None, i2c_driver=None)
-        assert self.begin(), "Initalization of SCMD failed."
         self.velocities = {"az": (0, 0), "alt": (0, 0)}
         self.debounce_interval = 5  # debounce interval in seconds
         self.last_reversal_time = {
@@ -23,7 +20,6 @@ class Motor(ABC, QwiicScmd):
             "alt": -5,
         }  # last reversal timestamps for motors
 
-    @abstractmethod
     def start(self, az_vel, alt_vel):
         """Start the motors with specified velocities."""
         pass
@@ -38,25 +34,24 @@ class Motor(ABC, QwiicScmd):
             return True
         return False
 
-    @abstractmethod
     def reverse(self, motor):
         """Reverse the specified motor."""
         pass
 
-    @abstractmethod
     def stop(self, motors=["az", "alt"]):
         """Stop the specified motors."""
         pass
 
-    @abstractmethod
     def stow(self, motors=["az", "alt"]):
         """Stow the specified motors (typically return to a safe position)."""
         pass
 
 
-class QwiicMotor(Motor):
+class QwiicMotor(Motor, QwiicScmd):
     def __init__(self):
-        super().__init__()
+        Motor.__init__()
+        QwiicScmd.__init__(address=None, i2c_driver=None)
+        assert self.begin(), "Initalization of SCMD failed."
         self.enable()
         for i in [0, 1]:
             self.set_drive(i, 0, 0)
