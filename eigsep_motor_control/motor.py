@@ -12,8 +12,10 @@ except ImportError:
 MOTOR_ID = {"az": 0, "alt": 1}
 
 
-class Motor(ABC):
+class Motor(ABC, QwiicScmd):
     def __init__(self):
+        super().__init__(address=None, i2c_driver=None)
+        assert self.begin(), "Initalization of SCMD failed."
         self.velocities = {"az": (0, 0), "alt": (0, 0)}
         self.debounce_interval = 5  # debounce interval in seconds
         self.last_reversal_time = {
@@ -52,11 +54,9 @@ class Motor(ABC):
         pass
 
 
-class QwiicMotor(Motor, QwiicScmd):
+class QwiicMotor(Motor):
     def __init__(self):
-        Motor.__init__(self)  # Initialize Motor attributes
-        super().__init__(self, address=None, i2c_driver=None)
-        assert self.begin(), "Initialization of SCMD failed."
+        super().__init__()
         self.enable()
         for i in [0, 1]:
             self.set_drive(i, 0, 0)
