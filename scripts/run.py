@@ -8,7 +8,7 @@ start_time = time.time()
 
 # Setup logging for information and debugging.
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logging.basicConfig(level=logging.INFO)
 
 # Argument parsing setup to configure motor velocities and monitoring options.
 parser = ArgumentParser(description="Control the motors")
@@ -22,10 +22,7 @@ parser.add_argument(
     "-p", "--pot", action="store_true", help="Monitor potentiometer"
 )
 parser.add_argument(
-    "-s",
-    "--safe",
-    action="store_true",
-    help="Monitor pot, limit switch, and check for no movement.",
+    "-s", "--safe", action="store_true", help="Monitor pot, limit switch, and check for no movement."
 )
 args = parser.parse_args()
 
