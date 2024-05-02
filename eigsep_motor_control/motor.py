@@ -90,7 +90,7 @@ class QwiicMotor(Motor, QwiicScmd):
         for m in motors:
             self.set_drive(MOTOR_ID[m], 0, 0)
 
-    def stow(self):
+    def stow(self, motors=["az", "alt"]):
         """Stow method for returning motors to a home position."""
         raise NotImplementedError("Stow method not implemented.")
 
@@ -131,6 +131,6 @@ class PoluluMotor(Motor):
                 polulu_motors.motor2.setSpeed(0)
             self.velocities[motor] = (self.velocities[motor][0], 0)
 
-    def stow(self):
+    def stow(self, motors=["az", "alt"]):
         """Stow method for returning motors to a home position."""
         raise NotImplementedError("Stow method not implemented.")
