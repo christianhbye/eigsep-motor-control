@@ -2,33 +2,7 @@ import logging
 import numpy as np
 import serial
 import time
-from qwiic_dual_encoder_reader import QwiicDualEncoderReader
-from eigsep_motor_control.motor import MOTOR_ID
 from eigsep_motor_control.serial_params import BAUDRATE, INT_LEN
-
-
-class Encoder(QwiicDualEncoderReader):
-
-    def get_encoder(self, motor):
-        """
-        Read the encoder count of a motor.
-
-        Parameters
-        ----------
-        motor : str
-            Either ``az'' or ``alt''. The motor to read the encoder value of.
-
-        Returns
-        -------
-        encoder : int
-            The encoder value corresponding to the given motor.
-
-        """
-        mid = MOTOR_ID[motor]
-        if mid == 0:
-            return self.encoder.count1
-        elif mid == 1:
-            return self.encoder.count2
 
 
 class Potentiometer:
@@ -48,7 +22,7 @@ class Potentiometer:
         self.ser.reset_input_buffer()
 
         # voltage range of the pots
-        self.VOLT_RANGE = {"az": (0.3, 2.5), "alt": (1., 2.)}
+        self.VOLT_RANGE = {"az": (0.3, 2.5), "alt": (1.0, 2.0)}
         self.POT_ZERO_THRESHOLD = 0.005
 
         # voltage measurements (az, alt)
