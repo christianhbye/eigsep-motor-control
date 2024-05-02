@@ -96,8 +96,6 @@ class QwiicMotor(Motor, QwiicScmd):
 
 
 class PoluluMotor(Motor):
-    def __init__(self):
-        super().__init__()
 
     def start(self, az_vel=MAX_SPEED, alt_vel=MAX_SPEED):
         """Starts both motors with the given velocities."""
