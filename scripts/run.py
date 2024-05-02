@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 # Argument parsing setup to configure motor velocities and monitoring options.
 parser = ArgumentParser(description="Control the motors")
 parser.add_argument(
-    "-b", "--board", type="str", default="polulu", help="Motor board type"
+    "-b", "--board", type=str, default="polulu", help="Motor board type"
 )
 parser.add_argument(
     "-a", "--az", type=int, nargs='?', const=None, default=0, help="Azimuth motor velocity"
