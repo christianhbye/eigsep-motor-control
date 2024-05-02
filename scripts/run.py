@@ -44,18 +44,17 @@ ALT_VEL = args.el
 
 if args.pot:
     # Initialize events for reversing motor direction based on pot monitoring.
-    if AZ_VEL != 0:
-        az_reverse = Event()
-    else:
-        az_reverse = None
-    if ALT_VEL != 0:
-        alt_reverse = Event()
-    else:
-        alt_reverse = None
+    reverse_events = []
+    for vel in [AZ_VEL, ALT_VEL]:
+        if vel != 0:
+            event = Event()
+        else:
+            event = None
+        reverse_events.append(event)
     pot = emc.Potentiometer()
     # Create and start a separate thread to monitor potentiometer if enabled.
     thd = Thread(
-        target=pot.monitor, args=(az_reverse, alt_reverse), daemon=True
+        target=pot.monitor, args=reverse_events, daemon=True
     )
     logging.info("Starting pot thread.")
     thd.start()
@@ -101,26 +100,26 @@ try:
                 )
                 break
 
-            # check and handle limit switch events.
+            # check and handle limit switch events
             limits = emc.reverse_limit(motor, pot, limits)
 
         # Check and react to reverse signals set by potentiometer monitoring.
-        for name, event in zip(["az", "alt"], [az_reverse, alt_reverse]):
+        for name, event in zip(["az", "alt"], reverse_events):
             if event is None:
                 continue
-            elif event.is_set():
-                logging.info(f"Reversing {name} motor.")
+            if event.is_set():
+                print(f"Reversing {name} motor.")
                 motor.reverse(name)
-                time.sleep(0.25)
+                time.sleep(0.5)
                 event.clear()
 
         time.sleep(0.1)
 except KeyboardInterrupt:
-    logging.info("Exiting.")
+    print("\nExiting.")
 finally:
     # ensure motors are stopped on exit.
     run_time = time.time() - start_time
-    logging.info(f"Run Time: {run_time} seconds, {run_time/3600} hours.")
+    print(f"Run Time: {run_time} seconds, {run_time/3600} hours.")
     motor.stop()
 
 # motor.stow(motors=["az", "alt"])
