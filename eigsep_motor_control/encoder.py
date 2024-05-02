@@ -48,7 +48,7 @@ class Potentiometer:
         self.ser.reset_input_buffer()
 
         # voltage range of the pots
-        self.VOLT_RANGE = {"az": (0.3, 2.5), "alt": (1., 2.)}
+        self.VOLT_RANGE = {"az": (0.3, 2.5), "alt": (1.0, 2.0)}
         self.POT_ZERO_THRESHOLD = 0.005
 
         # voltage measurements (az, alt)
