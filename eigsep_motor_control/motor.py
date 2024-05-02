@@ -55,7 +55,7 @@ class Motor(ABC):
 class QwiicMotor(Motor, QwiicScmd):
     def __init__(self):
         Motor.__init__(self)  # Initialize Motor attributes
-        QwiicScmd.__init__(self, address=None, i2c_driver=None)
+        super().__init__(self, address=None, i2c_driver=None)
         assert self.begin(), "Initialization of SCMD failed."
         self.enable()
         for i in [0, 1]:
