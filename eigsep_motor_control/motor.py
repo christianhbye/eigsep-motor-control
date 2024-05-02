@@ -1,13 +1,13 @@
 import numpy as np
 import time
 from qwiic_scmd import QwiicScmd
+from abc import ABC, abstractmethod
 
 try:
-    from dual_max14870_rpi import motors, MAX_SPEED
+    from dual_max14870_rpi import motors as polulu_motors, MAX_SPEED
 except ImportError:
-    motors = None  # Create a dummy or mock 'motors' if needed
+    polulu_motors = None  # Create a dummy or mock 'motors' if needed
     MAX_SPEED = 0
-from abc import ABC, abstractmethod
 
 MOTOR_ID = {"az": 0, "alt": 1}
 
@@ -103,7 +103,7 @@ class PoluluMotor(Motor):
         """Starts both motors with the given velocities."""
         az_direction = 1 if az_vel > 0 else 0
         alt_direction = 1 if alt_vel > 0 else 0
-        motors.setSpeeds(az_vel, alt_vel)
+        polulu_motors.setSpeeds(az_vel, alt_vel)
         self.velocities["az"] = (az_direction, abs(az_vel))
         self.velocities["alt"] = (alt_direction, abs(alt_vel))
 
@@ -117,18 +117,18 @@ class PoluluMotor(Motor):
                     -current_speed if current_direction == 1 else current_speed
                 )
                 if motor == "az":
-                    motors.motor1.setSpeed(new_speed)  # motor1 for azimuth
+                    polulu_motors.motor1.setSpeed(new_speed)  # motor1 for azimuth
                 elif motor == "alt":
-                    motors.motor2.setSpeed(new_speed)  # motor2 for altitude
+                    polulu_motors.motor2.setSpeed(new_speed)  # motor2 for altitude
                 self.velocities[motor] = (new_direction, abs(new_speed))
 
     def stop(self, motors=["az", "alt"]):
         """Stops specified motors (azimuth and/or altitude)."""
         for motor in motors:
             if motor == "az":
-                motors.motor1.setSpeed(0)
+                polulu_motors.motor1.setSpeed(0)
             elif motor == "alt":
-                motors.motor2.setSpeed(0)
+                polulu_motors.motor2.setSpeed(0)
             self.velocities[motor] = (self.velocities[motor][0], 0)
 
     def stow(self):
