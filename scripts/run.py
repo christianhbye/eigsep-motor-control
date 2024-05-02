@@ -53,9 +53,7 @@ if args.pot:
         reverse_events.append(event)
     pot = emc.Potentiometer()
     # Create and start a separate thread to monitor potentiometer if enabled.
-    thd = Thread(
-        target=pot.monitor, args=reverse_events, daemon=True
-    )
+    thd = Thread(target=pot.monitor, args=reverse_events, daemon=True)
     logging.info("Starting pot thread.")
     thd.start()
 else:

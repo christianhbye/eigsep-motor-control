@@ -117,9 +117,13 @@ class PoluluMotor(Motor):
                     -current_speed if current_direction == 1 else current_speed
                 )
                 if motor == "az":
-                    polulu_motors.motor1.setSpeed(new_speed)  # motor1 for azimuth
+                    polulu_motors.motor1.setSpeed(
+                        new_speed
+                    )  # motor1 for azimuth
                 elif motor == "alt":
-                    polulu_motors.motor2.setSpeed(new_speed)  # motor2 for altitude
+                    polulu_motors.motor2.setSpeed(
+                        new_speed
+                    )  # motor2 for altitude
                 self.velocities[motor] = (new_direction, abs(new_speed))
 
     def stop(self, motors=["az", "alt"]):
