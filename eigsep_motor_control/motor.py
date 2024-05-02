@@ -50,7 +50,7 @@ class Motor():
 class QwiicMotor(Motor, QwiicScmd):
     def __init__(self):
         Motor.__init__(self)
-        QwiicScmd.__init__(address=None, i2c_driver=None)
+        QwiicScmd.__init__(self, address=None, i2c_driver=None)
         assert self.begin(), "Initalization of SCMD failed."
         self.enable()
         for i in [0, 1]:
