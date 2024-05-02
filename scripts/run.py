@@ -13,6 +13,9 @@ logger.setLevel(logging.INFO)
 # Argument parsing setup to configure motor velocities and monitoring options.
 parser = ArgumentParser(description="Control the motors")
 parser.add_argument(
+    "-b", "--board", type="str", default="polulu", help="Motor board type"
+)
+parser.add_argument(
     "-a", "--az", type=int, default=0, help="Azimuth motor velocity"
 )
 parser.add_argument(
@@ -26,12 +29,6 @@ parser.add_argument(
     "--safe",
     action="store_true",
     help="Monitor pot, limit switch, and check for no movement.",
-)
-parser.add_argument(
-    "-qm", "--qwiic", action="store_true", help="Using qwiic motors"
-)
-parser.add_argument(
-    "-pm", "--polulu", action="store_true", help="Using polulu motors"
 )
 args = parser.parse_args()
 
@@ -61,16 +58,15 @@ else:
 
 # Start the motors with the specified velocities.
 logging.info(f"Starting motors with speeds: az={AZ_VEL}, alt={ALT_VEL}.")
-if args.qwiic and not args.polulu:
+if args.board == "qwiic":
     motor = emc.QwiicMotor()
-elif args.polulu and not args.qwiic:
+elif args.board == "polulu":
     motor = emc.PoluluMotor()
 else:
     logging.info(
-        "No valid motor argument given or too many motor arguments given."
+        "No valid motor argument given, defaulting to polulu."
     )
-    logging.info("Exiting.")
-    exit
+    motor = emc.PoluluMotor()
 motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
 
 # Initialize limit switch events if monitoring is enabled.
