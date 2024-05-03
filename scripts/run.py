@@ -13,19 +13,40 @@ logging.basicConfig(level=logging.INFO)
 # Argument parsing setup to configure motor velocities and monitoring options.
 parser = ArgumentParser(description="Control the motors")
 parser.add_argument(
-    "-b", "--board", type=str, nargs='?', const=None, default="polulu", help="Motor board type"
+    "-b",
+    "--board",
+    type=str,
+    nargs="?",
+    const=None,
+    default="polulu",
+    help="Motor board type",
 )
 parser.add_argument(
-    "-a", "--az", type=int, nargs='?', const=None, default=0, help="Azimuth motor velocity"
+    "-a",
+    "--az",
+    type=int,
+    nargs="?",
+    const=None,
+    default=0,
+    help="Azimuth motor velocity",
 )
 parser.add_argument(
-    "-e", "--el", type=int, nargs='?', const=None, default=0, help="Elevation motor velocity"
+    "-e",
+    "--el",
+    type=int,
+    nargs="?",
+    const=None,
+    default=0,
+    help="Elevation motor velocity",
 )
 parser.add_argument(
     "-p", "--pot", action="store_true", help="Monitor potentiometer"
 )
 parser.add_argument(
-    "-s", "--safe", action="store_true", help="Monitor pot, limit switch, and check for no movement."
+    "-s",
+    "--safe",
+    action="store_true",
+    help="Monitor pot, limit switch, and check for no movement.",
 )
 parser.add_argument(
     "-d", "--dummy", action="store_true", help="Dummy mode for testing purposes."
@@ -35,7 +56,7 @@ args = parser.parse_args()
 if args.safe or args.dummy:
     args.pot = True
 
-# Setting velocity and motor based on board type if a velocity is not given. 
+# Setting velocity based on board type if a velocity is not given.
 if args.board == "polulu":
     default_val = 480
     motor = emc.PoluluMotor()
@@ -50,7 +71,7 @@ else:
 if args.az is None:
     args.az = default_val
 if args.el is None:
-    args.el = default_val   
+    args.el = default_val
 
 # Setting initial motor velocities and type from parsed arguments.
 AZ_VEL = args.az
@@ -127,4 +148,4 @@ finally:
     print(f"Run Time: {run_time} seconds, {run_time/3600} hours.")
     motor.stop()
 
-#motor.stow(motors=["az", "alt"])
+# motor.stow(motors=["az", "alt"])
