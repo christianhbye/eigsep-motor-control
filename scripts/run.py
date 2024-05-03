@@ -27,29 +27,35 @@ parser.add_argument(
 parser.add_argument(
     "-s", "--safe", action="store_true", help="Monitor pot, limit switch, and check for no movement."
 )
+parser.add_argument(
+    "-d", "--dummy", action="store_true", help="Dummy mode for testing purposes."
+)
 args = parser.parse_args()
 
 if args.safe:
     args.pot = True
 
-# Setting velocity based on board type if a velocity is not given. 
+# Setting velocity and motor based on board type if a velocity is not given. 
 if args.board == "polulu":
     default_val = 480
+    motor = emc.PoluluMotor()
 elif args.board == "qwiic":
     default_val = 254
+    motor = emc.QwiicMotor()
 else:
     logging.info("No valid motor argument given, defaulting to polulu.")
     args.board = "polulu"
     default_val = 480
+    motor = emc.PoluluMotor()
 if args.az is None:
     args.az = default_val
 if args.el is None:
     args.el = default_val   
 
-# Setting initial motor velocities from parsed arguments.
+# Setting initial motor velocities and type from parsed arguments.
 AZ_VEL = args.az
 ALT_VEL = args.el
-
+    
 if args.pot:
     # Initialize events for reversing motor direction based on pot monitoring.
     reverse_events = []
@@ -59,7 +65,10 @@ if args.pot:
         else:
             event = None
         reverse_events.append(event)
-    pot = emc.Potentiometer()
+    if args.dummy:
+        pot = emc.DummyPotentiomer(motor)
+    else:
+        pot = emc.Potentiometer()
     # Create and start a separate thread to monitor potentiometer if enabled.
     thd = Thread(target=pot.monitor, args=reverse_events, daemon=True)
     logging.info("Starting pot thread.")
@@ -69,10 +78,6 @@ else:
 
 # Start the motors with the specified velocities.
 logging.info(f"Starting motors with speeds: az={AZ_VEL}, alt={ALT_VEL}.")
-if args.board == "qwiic":
-    motor = emc.QwiicMotor()
-elif args.board == "polulu":
-    motor = emc.PoluluMotor()
 motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
 
 # Initialize limit switch events if monitoring is enabled.
