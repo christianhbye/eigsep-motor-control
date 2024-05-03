@@ -32,7 +32,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-if args.safe:
+if args.safe or args.dummy:
     args.pot = True
 
 # Setting velocity and motor based on board type if a velocity is not given. 
