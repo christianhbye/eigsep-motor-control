@@ -11,7 +11,7 @@ except ImportError:
 MOTOR_ID = {"az": 0, "alt": 1}
 
 
-class Motor():
+class Motor:
     def __init__(self):
         self.velocities = {"az": (0, 0), "alt": (0, 0)}
         self.debounce_interval = 5  # debounce interval in seconds
