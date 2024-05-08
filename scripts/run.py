@@ -16,10 +16,8 @@ parser.add_argument(
     "-b",
     "--board",
     type=str,
-    nargs="?",
-    const=None,
     default="polulu",
-    help="Motor board type",
+    help="Motor board type: ``polulu'' (default) or ``qwiic''",
 )
 parser.add_argument(
     "-a",
