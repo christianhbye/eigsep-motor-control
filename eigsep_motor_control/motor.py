@@ -3,9 +3,9 @@ import time
 from qwiic_scmd import QwiicScmd
 
 try:
-    from dual_max14870_rpi import motors as polulu_motors, MAX_SPEED
+    from dual_max14870_rpi import motors as pololu_motors, MAX_SPEED
 except ImportError:
-    polulu_motors = None  # Create a dummy or mock 'motors' if needed
+    pololu_motors = None  # Create a dummy or mock 'motors' if needed
     MAX_SPEED = 0
 
 MOTOR_ID = {"az": 0, "alt": 1}
@@ -90,13 +90,13 @@ class QwiicMotor(Motor, QwiicScmd):
         raise NotImplementedError("Stow method not implemented.")
 
 
-class PoluluMotor(Motor):
+class PololuMotor(Motor):
 
     def start(self, az_vel=MAX_SPEED, alt_vel=MAX_SPEED):
         """Starts both motors with the given velocities."""
         az_direction = 1 if az_vel > 0 else 0
         alt_direction = 1 if alt_vel > 0 else 0
-        polulu_motors.setSpeeds(az_vel, alt_vel)
+        pololu_motors.setSpeeds(az_vel, alt_vel)
         self.velocities["az"] = (az_direction, abs(az_vel))
         self.velocities["alt"] = (alt_direction, abs(alt_vel))
 
@@ -110,11 +110,11 @@ class PoluluMotor(Motor):
                     -current_speed if current_direction == 1 else current_speed
                 )
                 if motor == "az":
-                    polulu_motors.motor1.setSpeed(
+                    pololu_motors.motor1.setSpeed(
                         new_speed
                     )  # motor1 for azimuth
                 elif motor == "alt":
-                    polulu_motors.motor2.setSpeed(
+                    pololu_motors.motor2.setSpeed(
                         new_speed
                     )  # motor2 for altitude
                 self.velocities[motor] = (new_direction, abs(new_speed))
@@ -123,9 +123,9 @@ class PoluluMotor(Motor):
         """Stops specified motors (azimuth and/or altitude)."""
         for motor in motors:
             if motor == "az":
-                polulu_motors.motor1.setSpeed(0)
+                pololu_motors.motor1.setSpeed(0)
             elif motor == "alt":
-                polulu_motors.motor2.setSpeed(0)
+                pololu_motors.motor2.setSpeed(0)
             self.velocities[motor] = (self.velocities[motor][0], 0)
 
     def stow(self, motors=["az", "alt"]):

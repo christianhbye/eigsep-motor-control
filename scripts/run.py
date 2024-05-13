@@ -16,8 +16,8 @@ parser.add_argument(
     "-b",
     "--board",
     type=str,
-    default="polulu",
-    help="Motor board type: ``polulu'' (default) or ``qwiic''",
+    default="pololu",
+    help="Motor board type: ``pololu'' (default) or ``qwiic''",
 )
 parser.add_argument(
     "-a",
@@ -52,13 +52,13 @@ if args.safe:
     args.pot = True
 
 # Setting velocity based on board type if a velocity is not given.
-if args.board == "polulu":
+if args.board == "pololu":
     default_val = 480
 elif args.board == "qwiic":
     default_val = 254
 else:
-    logging.info("No valid motor argument given, defaulting to polulu.")
-    args.board = "polulu"
+    logging.info("No valid motor argument given, defaulting to pololu.")
+    args.board = "pololu"
     default_val = 480
 if args.az is None:
     args.az = default_val
@@ -90,8 +90,8 @@ else:
 logging.info(f"Starting motors with speeds: az={AZ_VEL}, alt={ALT_VEL}.")
 if args.board == "qwiic":
     motor = emc.QwiicMotor()
-elif args.board == "polulu":
-    motor = emc.PoluluMotor()
+elif args.board == "pololu":
+    motor = emc.PololuMotor()
 motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
 
 # Initialize limit switch events if monitoring is enabled.
