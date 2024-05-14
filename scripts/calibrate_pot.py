@@ -1,22 +1,23 @@
 from argparse import ArgumentParser
-import sys
-import time
+import logging
 import numpy as np
+import time
 import eigsep_motor_control as emc
 
 
-def calibrate(motor, direction):
+def calibrate(motor, m, direction):
     """
     Calibrate the potentiometer corresponding to the motor.
 
     Parameters
     ----------
     motor : str
-        Motor to calibrate. Either 'az' or 'alt'.
+        Name of motor to calibrate. Either 'az' or 'alt'.
+    m : Motor
+        Instance of the emc.Motor class.
     direction : int
         Direction of the motor. 1 for forward (increasing pot voltages),
-        0 for reverse (decreasing pot voltages). This convention aligns with
-        the motor control module and imported libraries.
+        -1 for reverse (decreasing pot voltages).
 
     Returns
     -------
@@ -26,38 +27,37 @@ def calibrate(motor, direction):
         True if the pot was stuck, False otherwise.
 
     """
-    if motor == "az":
-        motor_id = 0
-        az_vel = 254
-        alt_vel = 0
-    elif motor == "alt":
-        motor_id = 1
-        az_vel = 0
-        alt_vel = 254
-    else:
-        raise ValueError("Invalid motor.")
-
-    if direction == 0:
-        az_vel = -az_vel
-        alt_vel = -alt_vel
-
-    m = emc.Motor()
     pot = emc.Potentiometer()
-    m.start(az_vel=az_vel, alt_vel=alt_vel)
     pot.reset_volt_readings()
 
+    if direction == -1:
+        vel = m.MIN_SPEED
+    elif direction == 1:
+        vel = m.MAX_SPEED
+    else:
+        raise ValueError("Invalid direction, must be -1 or 1.")
+    if motor == "az":
+        az_vel = vel
+        alt_vel = 0
+    elif motor == "alt":
+        az_vel = 0
+        alt_vel = vel
+    else:
+        raise ValueError("Invalid motor, must be ``az'' or ``alt''.")
+    m.start(az_vel=az_vel, alt_vel=alt_vel)
+
     # loops until the switch is triggered
-    print("Attack mode.")
+    m.logger.info("Attack mode.")
     try:
         while pot.direction[motor] == direction:
             v = pot.read_volts(motor=motor)
-            print(v)
+            m.logger.info(f"{v=}")
             time.sleep(0.1)
     except KeyboardInterrupt:
-        print("Interrupting.")
+        m.logger.warning("Interrupting.")
         m.stop()
     # get the extremum pot voltage (max if forward, min if reverse)
-    vm = np.max(np.abs(pot.volts[:, motor_id]))
+    vm = np.max(np.abs(pot.volts[:, emc.motor.MOTOR_ID[motor]]))
 
     # now: either the pot is stuck or the switch is triggered
     # this loops runs as long as the pot is stuck
@@ -66,16 +66,16 @@ def calibrate(motor, direction):
     try:
         while np.abs(pot.vdiff[motor])[-1] < tol:
             v = pot.read_volts(motor=motor)
-            print(v)
+            m.logger.info(f"{v=}")
             stuck_cnt += 1
             time.sleep(0.1)
-        print("Reverse until switch is released.")
+        m.logger.info("Reverse until switch is released.")
         while pot.direction[motor] == -direction:
             v = pot.read_volts(motor=motor)
-            print(v)
+            m.logger.info(f"{v=}")
             time.sleep(0.1)
     except KeyboardInterrupt:
-        print("Interrupting.")
+        m.logger.warning("Interrupting.")
         m.stop()
 
     m.stop()
@@ -84,7 +84,16 @@ def calibrate(motor, direction):
 
 if __name__ == "__main__":
 
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.INFO)
     parser = ArgumentParser(description="Calibrate potentiometers.")
+    parser.add_argument(
+        "-b",
+        "--board",
+        type=str,
+        default="pololu",
+        help="Motor board to use: ``pololu'' (default) or ``qwiic''.",
+    )
     parser.add_argument(
         "-a", "--az", action="store_true", help="Calibrate azimuth pot."
     )
@@ -99,20 +108,24 @@ if __name__ == "__main__":
     if args.el:
         motors.append("alt")
     if not motors:
-        print("Exiting...")
-        sys.exit()
+        raise ValueError("At least one motor must be selected.")
+
+    if args.board == "pololu":
+        m = emc.PololuMotor(logger=logger)
+    elif args.board == "qwiic":
+        m = emc.QwiicMotor(logger=logger)
+    else:
+        raise ValueError("Invalid board, must be ``pololu'' or ``qwiic''.")
 
     for motor in motors:
-        print(f"Calibrating {motor} potentiometer.")
-        vm, stuck = calibrate(motor, 1)
-        print(f"Max voltage: {vm}")
-        print(f"Stuck: {stuck}")
-        print("")
+        logger.info(f"Calibrating {motor} potentiometer.")
+        vm, stuck = calibrate(motor, m, 1)
+        logger.info(f"Max voltage: {vm}")
+        logger.info(f"Stuck: {stuck} \n")
         if not stuck:
-            print("Didn't get pot stuck, calibrate opposite direction.")
-            vm, stuck = calibrate(motor, 0)
-            print(f"Min voltage: {vm}")
-            print(f"Stuck: {stuck}")
-            print("")
+            logger.info("Didn't get pot stuck, calibrate opposite direction.")
+            vm, stuck = calibrate(motor, m, -1)
+            logger.info(f"Min voltage: {vm}")
+            logger.info(f"Stuck: {stuck} \n")
         else:
-            print("Pot was stuck, no need to calibrate opposite direction.")
+            logger.info("Pot was stuck, not calibrating opposite direction.")
