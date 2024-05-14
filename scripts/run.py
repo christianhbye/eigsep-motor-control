@@ -3,9 +3,10 @@ import logging
 import time
 from threading import Event, Thread
 import eigsep_motor_control as emc
+from RPi import GPIO
 
+GPIO.setwarnings(False)
 start_time = time.time()
-
 # Setup logging for information and debugging.
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -99,7 +100,6 @@ last_motion = time.time()  # time of last motor movement
 try:
     while True:
         if not args.pot:  # nothing is happening, there are no safety checks
-            print("...")
             time.sleep(1)
             continue
 
