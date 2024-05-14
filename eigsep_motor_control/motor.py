@@ -131,8 +131,8 @@ class PololuMotor(Motor):
         self.MAX_SPEED = MAX_SPEED["pololu"]
         GPIO.setmode(GPIO.BCM)
         # setup all pins as output
-        GPIO.setup(self.PWM_PINS.values(), GPIO.OUT)
-        GPIO.setup(self.DIR_PINS.values(), GPIO.OUT)
+        GPIO.setup(list(self.PWM_PINS.values()), GPIO.OUT)
+        GPIO.setup(list(self.DIR_PINS.values()), GPIO.OUT)
         GPIO.setup(self.EN_PIN, GPIO.OUT)
         # we first set the fault pin as output to ensure it is HIGH
         GPIO.setup(self.FAULT_PIN, GPIO.OUT)
@@ -188,7 +188,7 @@ class PololuMotor(Motor):
             # NOTE: annoyingly, this direction convention is opposite of the
             # other motor board
             direction = 0 if v > 0 else 1
-            self.set_drive(MOTOR_ID[m], direction, speed)
+            self.set_drive(m, direction, speed)
 
     def _speed2dc(self, speed):
         """Convert speed to duty cycle for PWM."""
@@ -201,8 +201,8 @@ class PololuMotor(Motor):
 
         Parameters
         ----------
-        motor : int
-            The motor number, must be 0 (azimuth) or 1 (altitude)
+        motor : str
+            The motor to drive, must be ``az'' (azimuth) or ``alt'' (altitude)
         direction : int
             Direction to drive motor in, must be 0 (``forward'', i.e.,
             increasing pot voltage) or 1 (``backward'').
