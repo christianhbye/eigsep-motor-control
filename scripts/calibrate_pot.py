@@ -44,7 +44,7 @@ def calibrate(motor, m, direction):
         alt_vel = vel
     else:
         raise ValueError("Invalid motor, must be ``az'' or ``alt''.")
-    m.start(az_vel=az_vel, alt_vel=alt_vel)
+    m.set_velocity(az_vel=az_vel, alt_vel=alt_vel)
 
     # loops until the switch is triggered
     m.logger.info("Attack mode.")
