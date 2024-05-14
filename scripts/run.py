@@ -3,9 +3,7 @@ import logging
 import time
 from threading import Event, Thread
 import eigsep_motor_control as emc
-from RPi import GPIO
 
-GPIO.setwarnings(False)
 start_time = time.time()
 # Setup logging for information and debugging.
 logger = logging.getLogger(__name__)

@@ -129,6 +129,7 @@ class PololuMotor(Motor):
         super().__init__(logger=logger)
         self.MIN_SPEED = MIN_SPEED["pololu"]
         self.MAX_SPEED = MAX_SPEED["pololu"]
+        GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         # setup all pins as output
         GPIO.setup(list(self.PWM_PINS.values()), GPIO.OUT)
