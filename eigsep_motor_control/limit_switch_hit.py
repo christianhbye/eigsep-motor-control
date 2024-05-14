@@ -1,3 +1,4 @@
+import numpy as np
 import time
 
 
@@ -25,10 +26,9 @@ def limit_switch(motor, m, pot):
         direction aligns with the potentiometer direction.
 
     """
-    direction, velocity = m.velocities[motor]
-    if velocity == 0:
-        return False
-    if pot.direction[motor] == 0:
+    velocity = m.velocities[motor]
+    direction = np.sign(velocity)
+    if velocity == 0 or pot.direction[motor] == 0:
         return False
     return (pot.direction[motor] != direction) and m.should_reverse(motor)
 
