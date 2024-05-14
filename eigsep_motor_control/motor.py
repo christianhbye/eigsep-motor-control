@@ -85,7 +85,7 @@ class Motor:
 
     def cleanup(self):
         self.stop()
-        #self.stow()
+        # self.stow()
 
 
 class QwiicMotor(Motor, QwiicScmd):
@@ -114,7 +114,7 @@ class QwiicMotor(Motor, QwiicScmd):
                 )
             speed = np.abs(v)
             direction = 1 if v > 0 else 0
-            self.set_drive(MOTOR_ID[m], direction, v)
+            self.set_drive(MOTOR_ID[m], direction, speed)
 
 
 class PololuMotor(Motor):
@@ -188,7 +188,7 @@ class PololuMotor(Motor):
             # NOTE: annoyingly, this direction convention is opposite of the
             # other motor board
             direction = 0 if v > 0 else 1
-            self.set_drive(MOTOR_ID[m], direction, v)
+            self.set_drive(MOTOR_ID[m], direction, speed)
 
     def _speed2dc(self, speed):
         """Convert speed to duty cycle for PWM."""
@@ -217,7 +217,7 @@ class PololuMotor(Motor):
 
     def cleanup(self):
         self.stop()
-        #self.stow()
+        # self.stow()
         for pwm in self.pwm.values():
             pwm.stop()
         self.disable()
