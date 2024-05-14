@@ -136,4 +136,3 @@ finally:
     run_time = time.time() - start_time
     print(f"Run Time: {run_time} seconds, {run_time/3600} hours.")
     motor.cleanup()
-
