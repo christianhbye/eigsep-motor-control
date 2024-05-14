@@ -5,6 +5,9 @@ from RPi import GPIO
 from qwiic_scmd import QwiicScmd
 
 MOTOR_ID = {"az": 0, "alt": 1}
+# min/max speeds for each motor driver
+MIN_SPEED = {"pololu": -480, "qwiic": -255}
+MAX_SPEED = {"pololu": 480, "qwiic": 254}
 
 
 class Motor:
@@ -26,7 +29,10 @@ class Motor:
 
     def should_reverse(self, motor):
         """Determine if the motor should reverse."""
-        return time.time() - self.last_reversal_time[motor] > self.debounce_interval
+        return (
+            time.time() - self.last_reversal_time[motor]
+            > self.debounce_interval
+        )
 
     def reverse(self, motor, force=False):
         """
@@ -77,16 +83,18 @@ class Motor:
         """Return motors to a home position."""
         raise NotImplementedError("Stow method not implemented yet.")
 
+    def cleanup(self):
+        self.stop()
+        #self.stow()
+
 
 class QwiicMotor(Motor, QwiicScmd):
-
-    MIN_SPEED = -255
-    MAX_SPEED = 254
-
 
     def __init__(self, logger=None, address=None, i2c_driver=None):
         Motor.__init__(self, logger=logger)
         QwiicScmd.__init__(self, address=address, i2c_driver=i2c_driver)
+        self.MIN_SPEED = MIN_SPEED["qwiic"]
+        self.MAX_SPEED = MAX_SPEED["qwiic"]
         assert self.begin(), "Initalization of SCMD failed."
         self.enable()
 
@@ -96,18 +104,20 @@ class QwiicMotor(Motor, QwiicScmd):
         for m, v in self.velocities.items():
             if v < self.MIN_SPEED:
                 v = self.MIN_SPEED
-                self.logger.warning(f"Speed for {m} motor too low. Setting to {v}.")
+                self.logger.warning(
+                    f"Speed for {m} motor too low. Setting to {v}."
+                )
             elif v > self.MAX_SPEED:
                 v = self.MAX_SPEED
-                self.logger.warning(f"Speed for {m} motor too high. Setting to {v}.")
+                self.logger.warning(
+                    f"Speed for {m} motor too high. Setting to {v}."
+                )
             speed = np.abs(v)
             direction = 1 if v > 0 else 0
             self.set_drive(MOTOR_ID[m], direction, v)
 
-class PololuMotor(Motor):
 
-    MIN_SPEED = -480
-    MAX_SPEED = 480
+class PololuMotor(Motor):
 
     # gpio pins for each motor (az/alt), for speed (PWM) and direction
     PWM_PINS = {"az": 12, "alt": 13}
@@ -117,6 +127,8 @@ class PololuMotor(Motor):
 
     def __init__(self, pwm_frequency=20e3, logger=None):
         super().__init__(logger=logger)
+        self.MIN_SPEED = MIN_SPEED["pololu"]
+        self.MAX_SPEED = MAX_SPEED["pololu"]
         GPIO.setmode(GPIO.BCM)
         # setup all pins as output
         GPIO.setup(self.PWM_PINS.values(), GPIO.OUT)
@@ -158,19 +170,22 @@ class PololuMotor(Motor):
             pwm.ChangeFrequency(frequency)
         self.pwm_frequency = frequency
 
-    
     def set_velocity(self, az_vel, alt_vel):
         """Sets the velocity of each motor."""
         self.velocities = {"az": az_vel, "alt": alt_vel}
         for m, v in self.velocities.items():
             if v < self.MIN_SPEED:
                 v = self.MIN_SPEED
-                self.logger.warning(f"Speed for {m} motor too low. Setting to {v}.")
+                self.logger.warning(
+                    f"Speed for {m} motor too low. Setting to {v}."
+                )
             elif v > self.MAX_SPEED:
                 v = self.MAX_SPEED
-                self.logger.warning(f"Speed for {m} motor too high. Setting to {v}.")
+                self.logger.warning(
+                    f"Speed for {m} motor too high. Setting to {v}."
+                )
             speed = np.abs(v)
-            # NOTE: annoyingly, this direction convention is opposite of the 
+            # NOTE: annoyingly, this direction convention is opposite of the
             # other motor board
             direction = 0 if v > 0 else 1
             self.set_drive(MOTOR_ID[m], direction, v)
@@ -189,14 +204,21 @@ class PololuMotor(Motor):
         motor : int
             The motor number, must be 0 (azimuth) or 1 (altitude)
         direction : int
-            Direction to drive motor in, must be 0 (``forward'', i.e., 
+            Direction to drive motor in, must be 0 (``forward'', i.e.,
             increasing pot voltage) or 1 (``backward'').
         speed : int
-            The unsigned speed to drive the motor at. Must be between 0 and 
+            The unsigned speed to drive the motor at. Must be between 0 and
             ``MAX_SPEED''.
 
         """
         GPIO.output(self.DIR_PINS[motor], direction)
         duty_cycle = self._speed2dc(speed)
         self.pwm[motor].ChangeDutyCycle(duty_cycle)
-    
+
+    def cleanup(self):
+        self.stop()
+        #self.stow()
+        for pwm in self.pwm.values():
+            pwm.stop()
+        self.disable()
+        GPIO.cleanup()
