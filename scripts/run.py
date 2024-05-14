@@ -51,23 +51,19 @@ args = parser.parse_args()
 if args.safe:
     args.pot = True
 
-# Setting velocity based on board type if a velocity is not given.
-if args.board == "pololu":
-    default_val = 480
-elif args.board == "qwiic":
-    default_val = 254
-else:
+if args.board not in ["pololu", "qwiic"]:
     logging.info("No valid motor argument given, defaulting to pololu.")
     args.board = "pololu"
-    default_val = 480
-if args.az is None:
-    args.az = default_val
-if args.el is None:
-    args.el = default_val
 
-# Setting initial motor velocities from parsed arguments.
-AZ_VEL = args.az
-ALT_VEL = args.el
+# default motor speed is set to the maximum speed for the given board
+if args.az is None:
+    AZ_VEL = emc.motor.MAX_SPEED[args.board]
+else:
+    AZ_VEL = args.az
+if args.el is None:
+    ALT_VEL = emc.motor.MAX_SPEED[args.board]
+else:
+    ALT_VEL = args.el
 
 if args.pot:
     # Initialize events for reversing motor direction based on pot monitoring.
@@ -89,10 +85,10 @@ else:
 # Start the motors with the specified velocities.
 logging.info(f"Starting motors with speeds: az={AZ_VEL}, alt={ALT_VEL}.")
 if args.board == "qwiic":
-    motor = emc.QwiicMotor()
+    motor = emc.QwiicMotor(logger=logger)
 elif args.board == "pololu":
-    motor = emc.PololuMotor()
-motor.start(az_vel=AZ_VEL, alt_vel=ALT_VEL)
+    motor = emc.PololuMotor(logger=logger)
+motor.set_velocity(AZ_VEL, ALT_VEL)
 
 # Initialize limit switch events if monitoring is enabled.
 if args.safe:
@@ -139,6 +135,5 @@ finally:
     # ensure motors are stopped on exit.
     run_time = time.time() - start_time
     print(f"Run Time: {run_time} seconds, {run_time/3600} hours.")
-    motor.stop()
+    motor.cleanup()
 
-# motor.stow(motors=["az", "alt"])
