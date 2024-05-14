@@ -1,133 +1,202 @@
+import logging
 import numpy as np
 import time
+from RPi import GPIO
 from qwiic_scmd import QwiicScmd
-
-try:
-    from dual_max14870_rpi import motors as pololu_motors, MAX_SPEED
-except ImportError:
-    pololu_motors = None  # Create a dummy or mock 'motors' if needed
-    MAX_SPEED = 0
 
 MOTOR_ID = {"az": 0, "alt": 1}
 
 
 class Motor:
-    def __init__(self):
-        self.velocities = {"az": (0, 0), "alt": (0, 0)}
+    def __init__(self, logger=None):
+        self.velocities = {"az": 0, "alt": 0}
         self.debounce_interval = 5  # debounce interval in seconds
-        self.last_reversal_time = {
-            "az": -5,
-            "alt": -5,
-        }  # last reversal timestamps for motors
+        # last reversal timestamps for motors
+        self.last_reversal_time = {"az": -5, "alt": -5}
 
-    def start(self, az_vel, alt_vel):
-        """Start the motors with specified velocities."""
-        pass
+        # set up logging
+        if logger is None:
+            logger = logging.getLogger(__name__)
+            logger.basicConfig(level=logging.INFO)
+        self.logger = logger
+
+    def set_velocity(self, az_vel, alt_vel):
+        """Starts both motors with the given velocities."""
+        raise NotImplementedError("Method must be implemented by subclass.")
 
     def should_reverse(self, motor):
         """Determine if the motor should reverse."""
-        current_time = time.time()
-        if (
-            current_time - self.last_reversal_time[motor]
-            > self.debounce_interval
-        ):
-            return True
-        return False
+        return time.time() - self.last_reversal_time[motor] > self.debounce_interval
 
-    def reverse(self, motor):
-        """Reverse the specified motor."""
-        pass
+    def reverse(self, motor, force=False):
+        """
+        Reverse the direction of the specified motor unless the motor
+        has been reversed too recently (can be forced with the force flag).
 
-    def stop(self, motors=["az", "alt"]):
-        """Stop the specified motors."""
-        pass
+        Parameters
+        ----------
+        motor : str
+            The motor to reverse. Must be either "az" or "alt".
+        force : bool
+            Reverse the motor regardless of the debounce interval.
 
-    def stow(self, motors=["az", "alt"]):
-        """Stow the specified motors (typically return to a safe position)."""
-        pass
+        """
+        if not self.should_reverse(motor) and not force:
+            self.logger.warning("Reversal too soon after last reversal.")
+            return
+        if motor == "az":
+            az_vel = -1 * self.velocities["az"]
+            alt_vel = self.velocities["alt"]
+        elif motor == "alt":
+            az_vel = self.velocities["az"]
+            alt_vel = -1 * self.velocities["alt"]
+        else:
+            raise ValueError("Invalid motor specified.")
+        self.set_velocity(az_vel, alt_vel)
+        self.last_reversal_time[motor] = time.time()
+
+    def stop(self, motors=("az", "alt")):
+        """
+        Stop the specified motors (azimuth and/or altitude).
+
+        Parameters
+        ----------
+        motors : str or list of str
+            The motor(s) to stop. Must be either "az" or "alt" or a list of
+            these strings.
+
+        """
+        if isinstance(motors, str):
+            motors = [motors]
+        vel = self.velocities
+        for m in motors:
+            vel[m] = 0
+        self.set_velocity(vel["az"], vel["alt"])
+
+    def stow(self, motors=("az", "alt")):
+        """Return motors to a home position."""
+        raise NotImplementedError("Stow method not implemented yet.")
 
 
 class QwiicMotor(Motor, QwiicScmd):
-    def __init__(self):
-        Motor.__init__(self)
-        QwiicScmd.__init__(self, address=None, i2c_driver=None)
+
+    MIN_SPEED = -255
+    MAX_SPEED = 254
+
+
+    def __init__(self, logger=None, address=None, i2c_driver=None):
+        Motor.__init__(self, logger=logger)
+        QwiicScmd.__init__(self, address=address, i2c_driver=i2c_driver)
         assert self.begin(), "Initalization of SCMD failed."
         self.enable()
-        for i in [0, 1]:
-            self.set_drive(i, 0, 0)
 
-    def start(self, az_vel=254, alt_vel=254):
-        """Starts both motors with the given velocities."""
-        velocities = {"az": az_vel, "alt": alt_vel}
-        for m, v in velocities.items():
+    def set_velocity(self, az_vel, alt_vel):
+        """Sets the velocity of each motor."""
+        self.velocities = {"az": az_vel, "alt": alt_vel}
+        for m, v in self.velocities.items():
+            if v < self.MIN_SPEED:
+                v = self.MIN_SPEED
+                self.logger.warning(f"Speed for {m} motor too low. Setting to {v}.")
+            elif v > self.MAX_SPEED:
+                v = self.MAX_SPEED
+                self.logger.warning(f"Speed for {m} motor too high. Setting to {v}.")
             speed = np.abs(v)
-            if speed == 0:
-                continue
             direction = 1 if v > 0 else 0
-            self.set_drive(MOTOR_ID[m], direction, speed)
-            conventional_direction = 1 if direction == 1 else -1
-            self.velocities[m] = (conventional_direction, speed)
-
-    def reverse(self, motor):
-        """Reverses the specified motor (azimuth or altitude)."""
-        if self.should_reverse(motor):
-            d, s = self.velocities[motor]
-            reverse_dir = -1 * d
-            direction = 1 if reverse_dir > 0 else 0
-            self.set_drive(MOTOR_ID[motor], direction, s)
-            self.last_reversal_time[motor] = time.time()
-            self.velocities[motor] = (reverse_dir, s)
-
-    def stop(self, motors=["az", "alt"]):
-        """Stops specified motors (azimuth and/or altitude)."""
-        if isinstance(motors, str):
-            motors = [motors]
-        for m in motors:
-            self.set_drive(MOTOR_ID[m], 0, 0)
-
-    def stow(self, motors=["az", "alt"]):
-        """Stow method for returning motors to a home position."""
-        raise NotImplementedError("Stow method not implemented.")
-
+            self.set_drive(MOTOR_ID[m], direction, v)
 
 class PololuMotor(Motor):
 
-    def start(self, az_vel=MAX_SPEED, alt_vel=MAX_SPEED):
-        """Starts both motors with the given velocities."""
-        az_direction = 1 if az_vel > 0 else 0
-        alt_direction = 1 if alt_vel > 0 else 0
-        pololu_motors.setSpeeds(az_vel, alt_vel)
-        self.velocities["az"] = (az_direction, abs(az_vel))
-        self.velocities["alt"] = (alt_direction, abs(alt_vel))
+    MIN_SPEED = -480
+    MAX_SPEED = 480
 
-    def reverse(self, motor):
-        """Reverses the specified motor (azimuth or altitude)."""
-        if self.should_reverse(motor):
-            if motor in self.velocities:
-                current_direction, current_speed = self.velocities[motor]
-                new_direction = 0 if current_direction == 1 else 1
-                new_speed = (
-                    -current_speed if current_direction == 1 else current_speed
-                )
-                if motor == "az":
-                    pololu_motors.motor1.setSpeed(
-                        new_speed
-                    )  # motor1 for azimuth
-                elif motor == "alt":
-                    pololu_motors.motor2.setSpeed(
-                        new_speed
-                    )  # motor2 for altitude
-                self.velocities[motor] = (new_direction, abs(new_speed))
+    # gpio pins for each motor (az/alt), for speed (PWM) and direction
+    PWM_PINS = {"az": 12, "alt": 13}
+    DIR_PINS = {"az": 24, "alt": 25}
+    EN_PIN = 5  # set to LOW to enable motors, HIGH to disable
+    FAULT_PIN = 6  # normally HIGH, goes LOW when there is a fault
 
-    def stop(self, motors=["az", "alt"]):
-        """Stops specified motors (azimuth and/or altitude)."""
-        for motor in motors:
-            if motor == "az":
-                pololu_motors.motor1.setSpeed(0)
-            elif motor == "alt":
-                pololu_motors.motor2.setSpeed(0)
-            self.velocities[motor] = (self.velocities[motor][0], 0)
+    def __init__(self, pwm_frequency=20e3, logger=None):
+        super().__init__(logger=logger)
+        GPIO.setmode(GPIO.BCM)
+        # setup all pins as output
+        GPIO.setup(self.PWM_PINS.values(), GPIO.OUT)
+        GPIO.setup(self.DIR_PINS.values(), GPIO.OUT)
+        GPIO.setup(self.EN_PIN, GPIO.OUT)
+        # we first set the fault pin as output to ensure it is HIGH
+        GPIO.setup(self.FAULT_PIN, GPIO.OUT)
+        GPIO.output(self.FAULT_PIN, GPIO.HIGH)
+        # now we set it as input
+        GPIO.setup(self.FAULT_PIN, GPIO.IN)
+        self.enable()
+        # set up PWM for speed control
+        self.pwm = {}
+        if pwm_frequency > 50e3:
+            self.logger.warning("PWM frequency too high, setting to 50 kHz.")
+            pwm_frequency = 50e3
+        self.pwm_frequency = pwm_frequency
+        for m, pin in self.PWM_PINS.items():
+            self.pwm[m] = GPIO.PWM(pin, self.pwm_frequency)
+            self.pwm[m].start(0)
 
-    def stow(self, motors=["az", "alt"]):
-        """Stow method for returning motors to a home position."""
-        raise NotImplementedError("Stow method not implemented.")
+    def enable(self):
+        """Enable the motor driver."""
+        GPIO.output(self.EN_PIN, GPIO.LOW)
+
+    def disable(self):
+        """Disable the motor driver."""
+        GPIO.output(self.EN_PIN, GPIO.HIGH)
+
+    def fault(self):
+        """Check if there is a fault with the motor driver."""
+        return GPIO.input(self.FAULT_PIN) == GPIO.LOW
+
+    def change_pwm_frequency(self, frequency):
+        """Change the PWM frequency of the motor driver."""
+        if frequency > 50e3:
+            raise ValueError("PWM frequency too high, max is 50 kHz.")
+        for m, pwm in self.pwm.items():
+            pwm.ChangeFrequency(frequency)
+        self.pwm_frequency = frequency
+
+    
+    def set_velocity(self, az_vel, alt_vel):
+        """Sets the velocity of each motor."""
+        self.velocities = {"az": az_vel, "alt": alt_vel}
+        for m, v in self.velocities.items():
+            if v < self.MIN_SPEED:
+                v = self.MIN_SPEED
+                self.logger.warning(f"Speed for {m} motor too low. Setting to {v}.")
+            elif v > self.MAX_SPEED:
+                v = self.MAX_SPEED
+                self.logger.warning(f"Speed for {m} motor too high. Setting to {v}.")
+            speed = np.abs(v)
+            # NOTE: annoyingly, this direction convention is opposite of the 
+            # other motor board
+            direction = 0 if v > 0 else 1
+            self.set_drive(MOTOR_ID[m], direction, v)
+
+    def _speed2dc(self, speed):
+        """Convert speed to duty cycle for PWM."""
+        return np.abs(speed) / self.MAX_SPEED * 100
+
+    def set_drive(self, motor, direction, speed):
+        """
+        Drive a motor at a given speed. Users should call the set_velocity
+        method, not this one.
+
+        Parameters
+        ----------
+        motor : int
+            The motor number, must be 0 (azimuth) or 1 (altitude)
+        direction : int
+            Direction to drive motor in, must be 0 (``forward'', i.e., 
+            increasing pot voltage) or 1 (``backward'').
+        speed : int
+            The unsigned speed to drive the motor at. Must be between 0 and 
+            ``MAX_SPEED''.
+
+        """
+        GPIO.output(self.DIR_PINS[motor], direction)
+        duty_cycle = self._speed2dc(speed)
+        self.pwm[motor].ChangeDutyCycle(duty_cycle)
+    
