@@ -22,11 +22,11 @@ class Potentiometer:
         self.ser.reset_input_buffer()
 
         # voltage range of the pots
-        self.VOLT_RANGE = {"az": (0.3, 2.5), "alt": (1.0, 2.0)}
-        self.POT_ZERO_THRESHOLD = 0.005
+        self.VOLT_RANGE = {"az": (0.007, 2.5), "alt": (1.0, 2.0)}
+        self.POT_ZERO_THRESHOLD = 0.001
 
         # voltage measurements (az, alt)
-        size = 3  # number of measurements to store XXX
+        size = 2  # number of measurements to store XXX
         self.volts = np.zeros((size, 2))
         self.reset_volt_readings()
 
@@ -62,7 +62,7 @@ class Potentiometer:
             if np.abs(x) < self.POT_ZERO_THRESHOLD:
                 d[k] = 0
             else:
-                d[k] = np.sign(x)
+                d[k] = int(np.sign(x))
         return d
 
     def bit2volt(self, analog_value):
