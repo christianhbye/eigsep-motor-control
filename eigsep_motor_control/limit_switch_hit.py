@@ -56,7 +56,7 @@ def reverse_limit(m, pot, limits):
     """
     for motor, limit in zip(["az", "alt"], limits):
         if limit_switch(motor, m, pot) and not limit.is_set():
-            print(f"{motor}: Limit switch reached, setting event")
+            m.logger.warning(f"{motor}: Limit switch reached, setting event")
             limit.set()
         # reverse if limit switch is no longer triggered but the event is set
         elif not limit_switch(motor, m, pot) and limit.is_set():
