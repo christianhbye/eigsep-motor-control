@@ -13,7 +13,7 @@ def calibrate(motor, m, direction):
     ----------
     motor : str
         Name of motor to calibrate. Either 'az' or 'alt'.
-    m : Motor
+    m : emc.Motor
         Instance of the emc.Motor class.
     direction : int
         Direction of the motor. 1 for forward (increasing pot voltages),
@@ -58,7 +58,7 @@ def calibrate(motor, m, direction):
         m.stop()
     # get the extremum pot voltage (max if forward, min if reverse)
     vm = np.max(np.abs(pot.volts[:, emc.motor.MOTOR_ID[motor]]))
-
+    m.logger.info(f"Extremum voltage: {vm}")
     # now: either the pot is stuck or the switch is triggered
     # this loops runs as long as the pot is stuck
     tol = 0.01  # XXX arbitrary threshold for pot being stuck
