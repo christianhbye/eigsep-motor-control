@@ -28,7 +28,6 @@ def calibrate(motor, m, direction):
 
     """
     pot = emc.Potentiometer()
-    pot.reset_volt_readings()
 
     if direction == -1:
         vel = m.MIN_SPEED
@@ -45,41 +44,47 @@ def calibrate(motor, m, direction):
     else:
         raise ValueError("Invalid motor, must be ``az'' or ``alt''.")
     m.set_velocity(az_vel=az_vel, alt_vel=alt_vel)
-
+    m.logger.warning("Attack mode.")
+    pot.reset_volt_readings()
+    # check if limit switch is already pulled at start-up and undo it
+    while pot.direction[motor] == -direction:
+        m.logger.warning("Limit switch is triggered, reversing")
+        v = pot.read_volts(motor=motor)
+        time.sleep(0.1)
+        
     # loops until the switch is triggered
-    m.logger.info("Attack mode.")
     try:
         while pot.direction[motor] == direction:
             v = pot.read_volts(motor=motor)
-            m.logger.info(f"{v=}")
+            m.logger.info(f"{v=:.3f}")
             time.sleep(0.1)
     except KeyboardInterrupt:
         m.logger.warning("Interrupting.")
         m.stop()
     # get the extremum pot voltage (max if forward, min if reverse)
     vm = np.max(np.abs(pot.volts[:, emc.motor.MOTOR_ID[motor]]))
-    m.logger.info(f"Extremum voltage: {vm}")
+    m.logger.warning(f"Extremum voltage: {vm:.3f}")
     # now: either the pot is stuck or the switch is triggered
     # this loops runs as long as the pot is stuck
-    tol = 0.01  # XXX arbitrary threshold for pot being stuck
-    stuck_cnt = np.count_nonzero(np.abs(pot.vdiff[motor]) < tol)
+    stuck_t0 = time.time()
     try:
-        while np.abs(pot.vdiff[motor])[-1] < tol:
+        while pot.direction[motor] == 0:
             v = pot.read_volts(motor=motor)
-            m.logger.info(f"{v=}")
-            stuck_cnt += 1
-            time.sleep(0.1)
-        m.logger.info("Reverse until switch is released.")
+            m.logger.info(f"{v=:.3f}")
+            time.sleep(0.01)
+        stuck_time = time.time() - stuck_t0
+        m.logger.info(f"Pot stuck for {stuck_time} seconds")
+        m.logger.warning("Reverse until switch is released.")
         while pot.direction[motor] == -direction:
             v = pot.read_volts(motor=motor)
-            m.logger.info(f"{v=}")
-            time.sleep(0.1)
+            m.logger.info(f"{v=:.3f}")
+            time.sleep(0.01)
     except KeyboardInterrupt:
         m.logger.warning("Interrupting.")
         m.stop()
 
     m.stop()
-    return vm, stuck_cnt > 2
+    return vm, stuck_time >= 0.01
 
 
 if __name__ == "__main__":
@@ -120,12 +125,12 @@ if __name__ == "__main__":
     for motor in motors:
         logger.info(f"Calibrating {motor} potentiometer.")
         vm, stuck = calibrate(motor, m, 1)
-        logger.info(f"Max voltage: {vm}")
+        logger.info(f"Max voltage: {vm:.3f}")
         logger.info(f"Stuck: {stuck} \n")
         if not stuck:
             logger.info("Didn't get pot stuck, calibrate opposite direction.")
             vm, stuck = calibrate(motor, m, -1)
-            logger.info(f"Min voltage: {vm}")
+            logger.info(f"Min voltage: {vm:.3f}")
             logger.info(f"Stuck: {stuck} \n")
         else:
             logger.info("Pot was stuck, not calibrating opposite direction.")
