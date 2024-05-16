@@ -1,7 +1,9 @@
 import logging
 import numpy as np
+from pathlib import Path
 import serial
 import time
+import yaml
 from eigsep_motor_control.serial_params import BAUDRATE, INT_LEN
 
 
@@ -22,7 +24,10 @@ class Potentiometer:
         self.ser.reset_input_buffer()
 
         # voltage range of the pots
-        self.VOLT_RANGE = {"az": (0.007, 2.5), "alt": (1.0, 2.0)}
+        path = Path(__file__).parent / "config.yaml"
+        with open(path, "r") as f:
+            config = yaml.safe_load(f)
+        self.VOLT_RANGE = config["volt_range"]
         self.POT_ZERO_THRESHOLD = 0.001
 
         # voltage measurements (az, alt)

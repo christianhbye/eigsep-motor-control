@@ -1,7 +1,9 @@
 from argparse import ArgumentParser
 import logging
 import numpy as np
+from pathlib import Path
 import time
+import yaml
 import eigsep_motor_control as emc
 
 
@@ -51,7 +53,7 @@ def calibrate(motor, m, direction):
         m.logger.warning("Limit switch is triggered, reversing")
         v = pot.read_volts(motor=motor)
         time.sleep(0.1)
-        
+
     # loops until the switch is triggered
     try:
         while pot.direction[motor] == direction:
@@ -122,15 +124,31 @@ if __name__ == "__main__":
     else:
         raise ValueError("Invalid board, must be ``pololu'' or ``qwiic''.")
 
+    path = Path(__file__).parent.parent / "eigsep_motor_control" / "config.yml"
+    with open(path, "r") as f:
+        config = yaml.safe_load(f)
+        volt_range = config["volt_range"]
     for motor in motors:
+        # voltage difference between min and max pot voltage
+        vdiff = volt_range[motor][1] - volt_range[motor][0]
         logger.info(f"Calibrating {motor} potentiometer.")
-        vm, stuck = calibrate(motor, m, 1)
-        logger.info(f"Max voltage: {vm:.3f}")
-        logger.info(f"Stuck: {stuck} \n")
+        vmax, stuck = calibrate(motor, m, 1)
         if not stuck:
             logger.info("Didn't get pot stuck, calibrate opposite direction.")
-            vm, stuck = calibrate(motor, m, -1)
-            logger.info(f"Min voltage: {vm:.3f}")
-            logger.info(f"Stuck: {stuck} \n")
+            vmin, stuck = calibrate(motor, m, -1)
+            if not stuck:
+                raise RuntimeError("Calibration unsuccessful.")
+            vmax = vmin + vdiff
+            logger.info(f"Min voltage: {vmin:.3f}, max voltage: {vmax:.3f}")
         else:
             logger.info("Pot was stuck, not calibrating opposite direction.")
+            vmin = vmax - vdiff
+            logger.info(f"Min voltage: {vmin:.3f}, max voltage: {vmax:.3f}")
+        volt_range[motor] = (vmin, vmax)
+    config["volt_range"] = volt_range
+    with open(path, "w") as f:
+        yaml.dump(config, f)
+    logger.warning(
+        "Calibration successful, config file updated, run ``sudo pip3 install"
+        " .'' to apply changes."
+    )
