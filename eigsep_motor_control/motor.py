@@ -15,7 +15,9 @@ class Motor:
         self.velocities = {"az": 0, "alt": 0}
         self.debounce_interval = 5  # debounce interval in seconds
         # last reversal timestamps for motors
-        self.last_reversal_time = {"az": -5, "alt": -5}
+        self.last_reversal_time = {
+            "az": -self.debounce_interval, "alt": -self.debounce_interval
+        }
 
         # set up logging
         if logger is None:
