@@ -202,3 +202,41 @@ class Potentiometer:
                 if trigger:
                     event.set()
                     # self.reset_volt_readings()
+
+class DummyPotentiometer(Potentiometer):
+    
+    def __init__(self, motor_system):
+        super().__init__()
+        self.motor_system = motor_system
+        self.simulated_pots = {"az": 32768, "alt": 32768} # Initial simulated mid-range pot values mid-range pot values
+
+    def update_pot_values(self):
+        """
+        Updates the simulated pot values based on motor velocities.
+        
+        """
+        for motor, (direction, speed) in self.motor_system.velocities.items():
+            # Calculate change based on speed and direction
+            change = direction * speed
+            new_value = self.simulated_pots[motor] + change
+            # Clamp the values to stay within 16-bit range
+            self.simulated_pots[motor] = max(0, min(65535, new_value))
+
+    def read_analog(self):
+        """
+        Simulate the reading of analog values from the pots based on motor velocities.
+         Read the analog values of the pots.
+
+        Returns
+        -------
+        data : np.ndarray
+            The analog values of the pots averaged over INT_LEN
+            measurements. The first value is associated with the azimuth
+            pot, the second value is the altitude pot.
+
+        """
+        self.update_pot_values()
+        # Since the actual read_analog returns average values, simulate that aspect if necessary
+        simulated_values = np.array([self.simulated_pots["az"], self.simulated_pots["alt"]])
+        return simulated_values / INT_LEN
+        
