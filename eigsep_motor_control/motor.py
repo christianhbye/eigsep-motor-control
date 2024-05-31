@@ -2,7 +2,10 @@ import logging
 import numpy as np
 import time
 from threading import Event, Thread, Lock
-from RPi import GPIO
+try:
+    from RPi import GPIO
+except ImportError:
+    pass
 from qwiic_scmd import QwiicScmd
 
 MOTOR_ID = {"az": 0, "alt": 1}
