@@ -302,7 +302,7 @@ class DummyMotor(Motor):
                         self.reverse(motor, True)
                 elif (new_position >= min_limit and new_position <= max_limit):
                     self.limit_reversal = False
-                    self.limit_reversal_time = False
+                    #self.limit_reversal_time = False
 
                 self.simulated_positions[motor] = new_position
 
