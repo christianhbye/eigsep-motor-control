@@ -281,6 +281,7 @@ class DummyMotor(Motor):
         Continuously update the positions of the motors based on their velocities.
         This method runs in a background thread.
         """
+        check_time = 0
         while self.running:
             time.sleep(self.update_interval())
             for motor in ['az', 'alt']:
@@ -300,6 +301,7 @@ class DummyMotor(Motor):
                         self.reverse(motor, True)
                 elif (new_position >= min_limit and new_position <= max_limit):
                     self.limit_reversal = False
+                    self.limit_reversal_time = False
 
                 self.simulated_positions[motor] = new_position
 
