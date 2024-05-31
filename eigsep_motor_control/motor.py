@@ -278,7 +278,7 @@ class DummyMotor(Motor):
         self.MIN_SPEED = MIN_SPEED["dummy"]
         self.MAX_SPEED = MAX_SPEED["dummy"]
         self.simulated_positions = {"az": 0, "alt": 0}  # Initial positions for azimuth and altitude
-        self.position_limits = {"az": (0, 1000), "alt": (0, 1000)}  # Position limits for each motor
+        self.position_limits = {"az": (-30000, 30000), "alt": (-30000, 30000)}  # Position limits for each motor
         self.update_thread = None
         self.running = False
 
