@@ -288,7 +288,7 @@ class DummyMotor(Motor):
         """
         if not self.running:
             self.running = True
-            self.update_thread = Thread(target=self.update_position, daemon=True)
+            self.update_thread = Thread(target=self.update_positions, daemon=True)
             self.update_thread.start()
 
     def set_velocity(self, az_vel, alt_vel):
