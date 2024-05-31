@@ -231,7 +231,7 @@ class DummyPotentiometer(Potentiometer):
         Continuously updates the simulated pot values based on motor velocities.
         """
         while True:
-            time.sleep(0.1)  # Update frequency, adjust as needed
+            time.sleep(0.5)  # Update frequency, adjust as needed
             with self.lock:
                 for motor, speed in self.motor_system.velocities.items():
                     direction = np.sign(speed)
@@ -244,6 +244,7 @@ class DummyPotentiometer(Potentiometer):
         """
         Simulate the reading of analog values from the pots based on current simulated values.
         """
+        time.sleep(1)
         with self.lock:
             simulated_values = np.array([self.simulated_pots["az"], self.simulated_pots["alt"]])
         return simulated_values / INT_LEN
