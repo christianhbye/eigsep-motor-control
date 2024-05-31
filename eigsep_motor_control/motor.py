@@ -19,6 +19,7 @@ class Motor:
         self.last_reversal_time = {
             "az": -self.debounce_interval, "alt": -self.debounce_interval
         }
+        self.limit_reversal = False
 
         # set up logging
         if logger is None:
@@ -233,7 +234,7 @@ class DummyMotor(Motor):
         self.MIN_SPEED = MIN_SPEED["dummy"]
         self.MAX_SPEED = MAX_SPEED["dummy"]
         self.simulated_positions = {"az": 0, "alt": 0}  # Initial positions for azimuth and altitude
-        self.position_limits = {"az": (-30000, 30000), "alt": (-30000, 30000)}  # Position limits for each motor
+        self.position_limits = {"az": (-10000, 10000), "alt": (-10000, 10000)}  # Position limits for each motor
         self.update_thread = None
         self.running = False
 
@@ -286,10 +287,9 @@ class DummyMotor(Motor):
                 if new_position <= min_limit or new_position >= max_limit:
                     # Reverse the velocity
                     self.velocities[motor] *= -1
-                    # Calculate the overshoot and adjust the position
-                    overshoot = new_position - max_limit if new_position > max_limit else min_limit - new_position
-                    new_position = max_limit - overshoot if new_position > max_limit else min_limit + overshoot
-                    self.logger.warning(f"DummyMotor: {motor} hit limit switch at {old_position}, reversed to {new_position}")
+                    self.limit_reversal = True
+                else:
+                    self.limit_reversal = False
 
                 self.simulated_positions[motor] = new_position
 
