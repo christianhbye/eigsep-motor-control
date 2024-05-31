@@ -53,6 +53,8 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+if args.board == "dummy":
+    args.dummy_motor = True
 if args.dummy_motor:
     args.dummy_pot = True
 if args.safe or args.dummy_pot:
