@@ -216,7 +216,6 @@ class DummyPotentiometer:
         # Voltage measurements (az, alt)
         size = 2  # Number of measurements to store
         self.volts = np.zeros((size, 2))
-        self.reset_volt_readings()
         self.motor_system = motor_system
         self.simulated_pots = {"az": 32768, "alt": 32768}  # Initial simulated mid-range pot values
         self.update_thread = Thread(target=self.update_pot_values, daemon=True)
