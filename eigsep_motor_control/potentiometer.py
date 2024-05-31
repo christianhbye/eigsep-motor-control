@@ -204,13 +204,10 @@ class Potentiometer:
                     event.set()
                     # self.reset_volt_readings()
 
-class DummyPotentiometer(Potentiometer):
-    
+class DummyPotentiometer:
     def __init__(self, motor_system):
         # Manually initialize attributes needed from the base class
-        self.NBITS = 16  # ADC number of bits
-        self.VMAX = 3.3
-        self.lock = Lock()        
+        self.lock = Lock()
         path = Path(__file__).parent / "config.yaml"
         with open(path, "r") as f:
             config = yaml.safe_load(f)
@@ -224,6 +221,11 @@ class DummyPotentiometer(Potentiometer):
         self.simulated_pots = {"az": 32768, "alt": 32768}  # Initial simulated mid-range pot values
         self.update_thread = Thread(target=self.update_pot_values, daemon=True)
         self.update_thread.start()
+        print("DummyPotentiometer initialized with attributes:")
+        print(f"VOLT_RANGE: {self.VOLT_RANGE}")
+        print(f"POT_ZERO_THRESHOLD: {self.POT_ZERO_THRESHOLD}")
+        print(f"volts: {self.volts}")
+        print(f"simulated_pots: {self.simulated_pots}")
 
     def update_pot_values(self):
         """
