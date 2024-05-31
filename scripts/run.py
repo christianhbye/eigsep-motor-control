@@ -46,43 +46,38 @@ parser.add_argument(
     help="Monitor pot, limit switch, and check for no movement.",
 )
 parser.add_argument(
-    "-d", "--dummy", action="store_true", help="Dummy mode for testing purposes."
+    "-d", "--dummy_pot", action="store_true", help="Dummy potentiometer mode for testing purposes."
+)
+parser.add_argument(
+    "-m", "--dummy_motor", action="store_true", help="Dummy motor mode for testing purposes."
 )
 args = parser.parse_args()
 
-if args.safe or args.dummy:
+if args.safe or args.dummy_pot:
     args.pot = True
+if args.dummy_motor:
+    args.dummy_pot = True
 
-if args.board not in ["pololu", "qwiic"]:
+if args.dummy_motor or args.board == "dummy":
+    args.board = "dummy"
+    motor = emc.DummyMotor(logger=logger)
+elif args.board not in ["pololu", "qwiic"]:
     logging.info("No valid motor argument given, defaulting to pololu.")
     args.board = "pololu"
     motor = emc.PololuMotor(logger=logger)
+elif args.board == "pololu":
+    motor = emc.PololuMotor(logger=logger)
 elif args.board == "qwiic":
-    motor = emc.QwiicMotor(logger=logger)
+    motor = emc.QwiicMotor(logger=logger)    
 
-# default motor speed is set to the maximum speed for the given board
-if args.az is None:
-    AZ_VEL = emc.motor.MAX_SPEED[args.board]
-else:
-    AZ_VEL = args.az
-if args.el is None:
-    ALT_VEL = emc.motor.MAX_SPEED[args.board]
-else:
-    ALT_VEL = args.el
+# Set default motor speed is set to the maximum speed for the given board
+AZ_VEL = args.az if args.az is not None else emc.motor.MAX_SPEED[args.board]
+ALT_VEL = args.el if args.el is not None else emc.motor.MAX_SPEED[args.board]
 
 if args.pot:
     # Initialize events for reversing motor direction based on pot monitoring.
-    reverse_events = []
-    for vel in [AZ_VEL, ALT_VEL]:
-        if vel != 0:
-            event = Event()
-        else:
-            event = None
-        reverse_events.append(event)
-    if args.dummy:
-        pot = emc.DummyPotentiomer(motor)
-    else:
-        pot = emc.Potentiometer()
+    reverse_events = [Event() if vel != 0 else None for vel in [AZ_VEL, ALT_VEL]]
+    pot = emc.DummyPotentiometer(motor) if args.dummy_pot else emc.Potentiometer()
     # Create and start a separate thread to monitor potentiometer if enabled.
     thd = Thread(target=pot.monitor, args=reverse_events, daemon=True)
     logging.info("Starting pot thread.")
