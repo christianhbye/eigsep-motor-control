@@ -28,12 +28,12 @@ def limit_switch(motor, m, pot):
     """
     velocity = m.velocities[motor]
     direction = np.sign(velocity)
-    print(m.limit_reversal)
+    #print(m.limit_reversal)
     if m.limit_reversal:
         direction *= -1
     if velocity == 0 or pot.direction[motor] == 0:
         return False
-    print(pot.direction, direction)
+    #print(pot.direction, direction)
     return (pot.direction[motor] != direction) and m.should_reverse(motor)
 
 
