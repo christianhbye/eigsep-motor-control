@@ -247,4 +247,4 @@ class DummyPotentiometer(Potentiometer):
         time.sleep(1)
         with self.lock:
             simulated_values = np.array([self.simulated_pots["az"], self.simulated_pots["alt"]])
-        return simulated_values / INT_LEN
+        return simulated_values
