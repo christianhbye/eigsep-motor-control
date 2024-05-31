@@ -3,6 +3,7 @@ import numpy as np
 from pathlib import Path
 import serial
 import time
+from threading import Event, Thread, Lock
 import yaml
 from eigsep_motor_control.serial_params import BAUDRATE, INT_LEN
 
@@ -209,8 +210,8 @@ class DummyPotentiometer(Potentiometer):
         super().__init__()
         self.motor_system = motor_system
         self.simulated_pots = {"az": 32768, "alt": 32768}  # Initial simulated mid-range pot values
-        self.lock = threading.Lock()
-        self.update_thread = threading.Thread(target=self.update_pot_values, daemon=True)
+        self.lock = Lock()
+        self.update_thread = Thread(target=self.update_pot_values, daemon=True)
         self.update_thread.start()
 
     def update_pot_values(self):
