@@ -28,12 +28,10 @@ def limit_switch(motor, m, pot):
     """
     velocity = m.velocities[motor]
     direction = np.sign(velocity)
-    #print(m.limit_reversal)
     if m.limit_reversal:
         direction *= -1
     if velocity == 0 or pot.direction[motor] == 0:
         return False
-    #print(pot.direction, direction)
     return (pot.direction[motor] != direction) and m.should_reverse(motor)
 
 
@@ -64,6 +62,7 @@ def reverse_limit(m, pot, limits):
             limit.set()
         # reverse if limit switch is no longer triggered but the event is set
         elif not limit_switch(motor, m, pot) and limit.is_set():
+            m.logger.info(f"{motor}: Limit switch untriggered, reversing {motor} motor")
             m.reverse(motor)
             time.sleep(1)  # XXX
             limit.clear()

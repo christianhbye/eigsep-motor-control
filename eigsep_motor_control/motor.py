@@ -306,6 +306,7 @@ class DummyMotor(Motor):
                         check_time = time.time()
                 elif (new_position >= min_limit and new_position <= max_limit) and self.limit_reversal:
                     if time.time() > check_time + 1:
+                        self.logger.info("DummyMotor: Untriggered limit switch, motors manually reversing.")
                         self.reverse(motor, True)
                         self.limit_reversal = False
                         self.limit_reversal_time = False
