@@ -1,7 +1,15 @@
-volt_range:
+real_volt_range:
   alt:
   - 1.0
   - 2.0
   az:
   - 0.007
   - 1.507
+
+dummy_volt_range:
+  alt:
+  - 0.5
+  - 3.0
+  az:
+  - 0.2
+  - 2.9
