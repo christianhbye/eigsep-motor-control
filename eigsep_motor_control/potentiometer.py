@@ -28,7 +28,7 @@ class Potentiometer:
         path = Path(__file__).parent / "config.yaml"
         with open(path, "r") as f:
             config = yaml.safe_load(f)
-        self.VOLT_RANGE = config["volt_range"]
+        self.VOLT_RANGE = config["real_volt_range"]
         self.POT_ZERO_THRESHOLD = 0.001
 
         # voltage measurements (az, alt)
@@ -211,7 +211,7 @@ class DummyPotentiometer(Potentiometer):
         path = Path(__file__).parent / "config.yaml"
         with open(path, "r") as f:
             config = yaml.safe_load(f)
-        self.VOLT_RANGE = config["volt_range"]
+        self.VOLT_RANGE = config["dummy_volt_range"]
         self.POT_ZERO_THRESHOLD = 0.001
         # Voltage measurements (az, alt)
         size = 2  # Number of measurements to store
