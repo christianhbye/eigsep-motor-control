@@ -283,7 +283,6 @@ class DummyMotor(Motor):
         Continuously update the positions of the motors based on their velocities.
         This method runs in a background thread.
         """
-        check_time = time.time()
         while self.running:
             time.sleep(self.update_interval())
             for motor in ['az', 'alt']:
