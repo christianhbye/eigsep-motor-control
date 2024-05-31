@@ -66,7 +66,8 @@ class Motor:
         else:
             raise ValueError("Invalid motor specified.")
         self.set_velocity(az_vel, alt_vel)
-        self.last_reversal_time[motor] = time.time()
+        if not force:
+            self.last_reversal_time[motor] = time.time()
 
     def stop(self, motors=("az", "alt")):
         """
@@ -296,7 +297,7 @@ class DummyMotor(Motor):
                     if time.time() > check_time + 2:
                         self.limit_reversal = True
                         self.logger.info("DummyMotor: Hit limit switch, motors manually reversing.")
-                        self.reverse(motor)
+                        self.reverse(motor, True)
                 elif (new_position >= min_limit and new_position <= max_limit):
                     self.limit_reversal = False
 
