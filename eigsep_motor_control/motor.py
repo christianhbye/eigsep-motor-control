@@ -272,9 +272,11 @@ class DummyMotor(Motor):
                 )
             if m == "az":
                 self.velocities["az"] = v
+                az_vel = v
             elif m == "alt":
                 self.velocities["alt"] = v
-        self.logger.info(f"DummyMotor: Set velocities to azimuth: {self.velocities["az"]} and altitude: {self.velocities["alt"]}")
+                alt_vel = v
+        self.logger.info(f"DummyMotor: Set velocities to azimuth: {az_vel} and altitude: {alt_vel}")
 
     def update_positions(self):
         """
