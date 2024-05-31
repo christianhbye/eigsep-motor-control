@@ -1,13 +1,14 @@
 import logging
 import numpy as np
 import time
+from threading import Event, Thread, Lock
 from RPi import GPIO
 from qwiic_scmd import QwiicScmd
 
 MOTOR_ID = {"az": 0, "alt": 1}
 # min/max speeds for each motor driver
-MIN_SPEED = {"pololu": -480, "qwiic": -255}
-MAX_SPEED = {"pololu": 480, "qwiic": 254}
+MIN_SPEED = {"pololu": -480, "qwiic": -255, "dummy": -250}
+MAX_SPEED = {"pololu": 480, "qwiic": 254, "dummy": 250}
 
 
 class Motor:
@@ -225,3 +226,136 @@ class PololuMotor(Motor):
             pwm.stop()
         self.disable()
         GPIO.cleanup()
+
+
+class DummyMotor(Motor):
+    def __init__(self, logger=None):
+        super().__init__(logger)
+        self.MIN_SPEED = MIN_SPEED["dummy"]
+        self.MAX_SPEED = MAX_SPEED["dummy"]
+        self.simulated_positions = {"az": 0, "alt": 0}  # Initial positions for azimuth and altitude
+        self.position_limits = {"az": (0, 10000), "alt": (0, 10000)}  # Position limits for each motor
+
+    def set_velocity(self, az_vel, alt_vel):
+        """
+        Set the velocity for both motors, ensuring the velocities are within the allowed range.
+        This function logs detailed information and handles velocity constraints.
+        
+        Parameters:
+        az_vel (int): Desired velocity for the azimuth motor.
+        alt_vel (int): Desired velocity for the altitude motor.
+        """
+        self.velocities = {"az": az_vel, "alt": alt_vel}
+        self.update_positions()
+
+        for m, v in self.velocities.items():
+            if v < self.MIN_SPEED:
+                v = self.MIN_SPEED
+                self.logger.warning(
+                    f"Speed for {m} motor too low. Setting to {v}."
+                )
+            elif v > self.MAX_SPEED:
+                v = self.MAX_SPEED
+                self.logger.warning(
+                    f"Speed for {m} motor too high. Setting to {v}."
+                )
+    def update_positions(self):
+        """
+        Update the positions of the motors based on their velocities.
+        This method calculates the displacement since the last update and adjusts the positions accordingly.
+        """
+        # Assuming we call this method every second or on a known time interval
+        time_interval = 1  # Time interval in seconds for position update
+        for motor in ['az', 'alt']:
+            # Calculate displacement as velocity * time
+            displacement = self.velocities[motor] * time_interval
+            self.simulated_positions[motor] += displacement
+
+
+class DummyMotor(Motor):
+    def __init__(self, logger=None):
+        super().__init__(logger)
+        self.MIN_SPEED = MIN_SPEED["dummy"]
+        self.MAX_SPEED = MAX_SPEED["dummy"]
+        self.simulated_positions = {"az": 0, "alt": 0}  # Initial positions for azimuth and altitude
+        self.position_limits = {"az": (0, 1000), "alt": (0, 1000)}  # Position limits for each motor
+        self.lock = Lock()  # Thread safety lock
+        self.update_thread = Thread(target=self.update_positions, daemon=True)
+        self.running = False
+
+    def start_updates(self):
+        """
+        Start the background thread for updating motor positions.
+        """
+        self.running = True
+        self.update_thread.start()
+        self.logger.info("DummyMotor: Started the update thread.")
+
+    def set_velocity(self, az_vel, alt_vel):
+        """
+        Thread-safely set the velocity for both motors and log the action.
+        """
+        with self.lock:
+            self.velocities = {"az": az_vel, "alt": alt_vel}
+            for m, v in self.velocities.items():
+                if v < self.MIN_SPEED:
+                    v = self.MIN_SPEED
+                    self.logger.warning(
+                        f"Speed for {m} motor too low. Setting to {v}."
+                    )
+                elif v > self.MAX_SPEED:
+                    v = self.MAX_SPEED
+                    self.logger.warning(
+                        f"Speed for {m} motor too high. Setting to {v}."
+                    )
+            self.logger.info(f"DummyMotor: Set velocities to azimuth: {az_vel} and altitude: {alt_vel}")
+
+    def update_positions(self):
+        """
+        Continuously update the positions of the motors based on their velocities.
+        This method runs in a background thread.
+        """
+        while self.running:
+            time.sleep(self.update_interval())
+            with self.lock:
+                for motor in ['az', 'alt']:
+                    old_position = self.simulated_positions[motor]
+                    displacement = self.velocities[motor] * self.update_interval()
+                    new_position = old_position + displacement
+                    min_limit, max_limit = self.position_limits[motor]
+
+                    # Check for limit switch activation
+                    if new_position <= min_limit or new_position >= max_limit:
+                        # Reverse the velocity
+                        self.velocities[motor] *= -1
+                        # Calculate the overshoot and adjust the position
+                        overshoot = new_position - max_limit if new_position > max_limit else min_limit - new_position
+                        new_position = max_limit - overshoot if new_position > max_limit else min_limit + overshoot
+                        self.logger.warning(f"DummyMotor: {motor} hit limit switch at {old_position}, reversed to {new_position}")
+
+                    self.simulated_positions[motor] = new_position
+
+    def stop_updates(self):
+        """
+        Stop the background thread updating motor positions.
+        """
+        self.running = False
+        self.update_thread.join()
+        self.logger.info("DummyMotor: Stopped the update thread.")
+
+    def update_interval(self):
+        """
+        Provides a time interval for updates. In a real application, this might be tied to a timer or the system clock.
+        """
+        return 0.01  # 10 ms update interval for high-frequency updates
+
+    def stop(self, motors=("az", "alt")):
+        with self.lock:
+            super().stop(motors)
+            for motor in motors:
+                self.logger.info(f"DummyMotor: Stopped {motor} motor at position {self.simulated_positions[motor]}.")
+
+    def cleanup(self):
+        self.stop_updates()
+        super().cleanup()
+        self.logger.info("DummyMotor: Cleaned up resources.")
