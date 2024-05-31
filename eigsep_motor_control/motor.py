@@ -288,6 +288,8 @@ class DummyMotor(Motor):
                     # Reverse the velocity
                     self.velocities[motor] *= -1
                     self.limit_reversal = True
+                    self.logger.info("DummyMotor: Hit limit switch, motors manually reversing.")
+
                 else:
                     self.limit_reversal = False
 
