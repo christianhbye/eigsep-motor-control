@@ -238,6 +238,7 @@ class DummyMotor(Motor):
         self.MAX_SPEED = MAX_SPEED["dummy"]
         self.simulated_positions = {"az": 0, "alt": 0}  # Initial positions for azimuth and altitude
         self.position_limits = {"az": (-10000, 10000), "alt": (-10000, 10000)}  # Position limits for each motor
+        self.limit_reversal_time = False
         self.update_thread = None
         self.running = False
 
@@ -287,13 +288,16 @@ class DummyMotor(Motor):
                 new_position = old_position + displacement
                 min_limit, max_limit = self.position_limits[motor]
                 # Check for limit switch activation
-                if new_position <= min_limit or new_position >= max_limit:
+                if (new_position <= min_limit or new_position >= max_limit) and not self.limit_reversal and not self.limit_reversal_time:
+                    check_time = time.time()
+                    self.limit_reversal_time = True
+                elif (new_position <= min_limit or new_position >= max_limit) and not self.limit_reversal:
                     # Reverse the velocity
-                    self.velocities[motor] *= -1
-                    self.limit_reversal = True
-                    self.logger.info("DummyMotor: Hit limit switch, motors manually reversing.")
-
-                else:
+                    if time.time() > check_time + 2:
+                        self.limit_reversal = True
+                        self.logger.info("DummyMotor: Hit limit switch, motors manually reversing.")
+                        self.reverse(motor)
+                elif (new_position >= min_limit and new_position <= max_limit):
                     self.limit_reversal = False
 
                 self.simulated_positions[motor] = new_position
