@@ -204,7 +204,7 @@ class Potentiometer:
                     event.set()
                     # self.reset_volt_readings()
 
-class DummyPotentiometer:
+class DummyPotentiometer(Potentiometer):
     def __init__(self, motor_system):
         # Manually initialize attributes needed from the base class
         self.lock = Lock()
