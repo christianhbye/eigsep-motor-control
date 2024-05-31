@@ -65,7 +65,7 @@ def reverse_limit(m, pot, limits):
             m.reverse(motor)
             time.sleep(1)  # XXX
             limit.clear()
-            while limit_switch(motor, m, pot):
+            while limit_switch(motor, m, pot) or m.limit_reversal:
                 # Continue checking if the limit is still active to ensure
                 # pot.direction is updated correctly.
                 continue
