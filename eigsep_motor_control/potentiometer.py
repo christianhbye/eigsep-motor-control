@@ -220,11 +220,13 @@ class DummyPotentiometer(Potentiometer):
         self.simulated_pots = {"az": 32768, "alt": 32768}  # Initial simulated mid-range pot values
         self.update_thread = Thread(target=self.update_pot_values, daemon=True)
         self.update_thread.start()
-        print("DummyPotentiometer initialized with attributes:")
-        print(f"VOLT_RANGE: {self.VOLT_RANGE}")
-        print(f"POT_ZERO_THRESHOLD: {self.POT_ZERO_THRESHOLD}")
-        print(f"volts: {self.volts}")
-        print(f"simulated_pots: {self.simulated_pots}")
+        self.reset_volt_readings()
+        #print("DummyPotentiometer initialized with attributes:")
+        #print(f"VOLT_RANGE: {self.VOLT_RANGE}")
+        #print(f"POT_ZERO_THRESHOLD: {self.POT_ZERO_THRESHOLD}")
+        #print(f"volts: {self.volts}")
+        #print(f"simulated_pots: {self.simulated_pots}")
+
 
     def update_pot_values(self):
         """
