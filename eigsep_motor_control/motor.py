@@ -297,20 +297,19 @@ class DummyMotor(Motor):
         """
         if not self.running:
             self.start_updates()
-        with self.lock:
-            self.velocities = {"az": az_vel, "alt": alt_vel}
-            for m, v in self.velocities.items():
-                if v < self.MIN_SPEED:
-                    v = self.MIN_SPEED
-                    self.logger.warning(
-                        f"Speed for {m} motor too low. Setting to {v}."
-                    )
-                elif v > self.MAX_SPEED:
-                    v = self.MAX_SPEED
-                    self.logger.warning(
-                        f"Speed for {m} motor too high. Setting to {v}."
-                    )
-            self.logger.info(f"DummyMotor: Set velocities to azimuth: {az_vel} and altitude: {alt_vel}")
+        self.velocities = {"az": az_vel, "alt": alt_vel}
+        for m, v in self.velocities.items():
+            if v < self.MIN_SPEED:
+                v = self.MIN_SPEED
+                self.logger.warning(
+                    f"Speed for {m} motor too low. Setting to {v}."
+                )
+            elif v > self.MAX_SPEED:
+                v = self.MAX_SPEED
+                self.logger.warning(
+                    f"Speed for {m} motor too high. Setting to {v}."
+                )
+        self.logger.info(f"DummyMotor: Set velocities to azimuth: {az_vel} and altitude: {alt_vel}")
 
     def update_positions(self):
         """
