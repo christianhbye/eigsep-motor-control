@@ -227,51 +227,6 @@ class PololuMotor(Motor):
         self.disable()
         GPIO.cleanup()
 
-
-class DummyMotor(Motor):
-    def __init__(self, logger=None):
-        super().__init__(logger)
-        self.MIN_SPEED = MIN_SPEED["dummy"]
-        self.MAX_SPEED = MAX_SPEED["dummy"]
-        self.simulated_positions = {"az": 0, "alt": 0}  # Initial positions for azimuth and altitude
-        self.position_limits = {"az": (0, 10000), "alt": (0, 10000)}  # Position limits for each motor
-
-    def set_velocity(self, az_vel, alt_vel):
-        """
-        Set the velocity for both motors, ensuring the velocities are within the allowed range.
-        This function logs detailed information and handles velocity constraints.
-        
-        Parameters:
-        az_vel (int): Desired velocity for the azimuth motor.
-        alt_vel (int): Desired velocity for the altitude motor.
-        """
-        self.velocities = {"az": az_vel, "alt": alt_vel}
-        self.update_positions()
-
-        for m, v in self.velocities.items():
-            if v < self.MIN_SPEED:
-                v = self.MIN_SPEED
-                self.logger.warning(
-                    f"Speed for {m} motor too low. Setting to {v}."
-                )
-            elif v > self.MAX_SPEED:
-                v = self.MAX_SPEED
-                self.logger.warning(
-                    f"Speed for {m} motor too high. Setting to {v}."
-                )
-    def update_positions(self):
-        """
-        Update the positions of the motors based on their velocities.
-        This method calculates the displacement since the last update and adjusts the positions accordingly.
-        """
-        # Assuming we call this method every second or on a known time interval
-        time_interval = 1  # Time interval in seconds for position update
-        for motor in ['az', 'alt']:
-            # Calculate displacement as velocity * time
-            displacement = self.velocities[motor] * time_interval
-            self.simulated_positions[motor] += displacement
-
-
 class DummyMotor(Motor):
     def __init__(self, logger=None):
         super().__init__(logger)
@@ -309,6 +264,10 @@ class DummyMotor(Motor):
                 self.logger.warning(
                     f"Speed for {m} motor too high. Setting to {v}."
                 )
+            if m == "az":
+                self.velocities["az"] = v
+            elif m == "alt":
+                self.velocities["alt"] = v
         self.logger.info(f"DummyMotor: Set velocities to azimuth: {az_vel} and altitude: {alt_vel}")
 
     def update_positions(self):
