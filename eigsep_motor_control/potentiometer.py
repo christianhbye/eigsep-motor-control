@@ -246,7 +246,7 @@ class DummyPotentiometer(Potentiometer):
         """
         Simulate the reading of analog values from the pots based on current simulated values.
         """
-        time.sleep(1)
+        time.sleep(0.5)
         with self.lock:
             simulated_values = np.array([self.simulated_pots["az"], self.simulated_pots["alt"]])
         return simulated_values
