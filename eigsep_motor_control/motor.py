@@ -351,10 +351,9 @@ class DummyMotor(Motor):
         return 0.01  # 10 ms update interval for high-frequency updates
 
     def stop(self, motors=("az", "alt")):
-        with self.lock:
-            super().stop(motors)
-            for motor in motors:
-                self.logger.info(f"DummyMotor: Stopped {motor} motor at position {self.simulated_positions[motor]}.")
+        super().stop(motors)
+        for motor in motors:
+            self.logger.info(f"DummyMotor: Stopped {motor} motor at position {self.simulated_positions[motor]}.")
 
     def cleanup(self):
         self.stop()
