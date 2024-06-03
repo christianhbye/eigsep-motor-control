@@ -29,7 +29,7 @@ class Potentiometer:
         with open(path, "r") as f:
             config = yaml.safe_load(f)
         self.VOLT_RANGE = config["real_volt_range"]
-        self.POT_ZERO_THRESHOLD = 0.001
+        self.POT_ZERO_THRESHOLD = 0.0025
 
         # voltage measurements (az, alt)
         size = 2  # number of measurements to store XXX
