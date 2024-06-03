@@ -144,7 +144,7 @@ if __name__ == "__main__":
             logger.info("Pot was stuck, not calibrating opposite direction.")
             vmin = vmax - vdiff
             logger.info(f"Min voltage: {vmin:.3f}, max voltage: {vmax:.3f}")
-        volt_range[motor] = [vmin, vmax]
+        volt_range[motor] = [float(vmin), float(vmax)]
     config["real_volt_range"] = volt_range
     with open(path, "w") as f:
         yaml.safe_dump(config, f)
