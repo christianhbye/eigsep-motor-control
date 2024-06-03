@@ -147,7 +147,7 @@ if __name__ == "__main__":
         volt_range[motor] = [vmin, vmax]
     config["real_volt_range"] = volt_range
     with open(path, "w") as f:
-        yaml.dump(config, f)
+        yaml.safe_dump(config, f)
     logger.warning(
         "Calibration successful, config file updated, run ``sudo pip3 install"
         " .'' to apply changes."
