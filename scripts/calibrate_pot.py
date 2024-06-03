@@ -124,7 +124,7 @@ if __name__ == "__main__":
     else:
         raise ValueError("Invalid board, must be ``pololu'' or ``qwiic''.")
 
-    path = Path(__file__).parent.parent / "eigsep_motor_control" / "config.yml"
+    path = Path(__file__).parent.parent / "eigsep_motor_control" / "config.yaml"
     with open(path, "r") as f:
         config = yaml.safe_load(f)
         volt_range = config["volt_range"]
