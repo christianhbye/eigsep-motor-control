@@ -127,7 +127,7 @@ if __name__ == "__main__":
     path = Path(__file__).parent.parent / "eigsep_motor_control" / "config.yaml"
     with open(path, "r") as f:
         config = yaml.safe_load(f)
-        volt_range = config["volt_range"]
+        volt_range = config["real_volt_range"]
     for motor in motors:
         # voltage difference between min and max pot voltage
         vdiff = volt_range[motor][1] - volt_range[motor][0]
@@ -145,7 +145,7 @@ if __name__ == "__main__":
             vmin = vmax - vdiff
             logger.info(f"Min voltage: {vmin:.3f}, max voltage: {vmax:.3f}")
         volt_range[motor] = (vmin, vmax)
-    config["volt_range"] = volt_range
+    config["real_volt_range"] = volt_range
     with open(path, "w") as f:
         yaml.dump(config, f)
     logger.warning(
