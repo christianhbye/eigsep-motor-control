@@ -55,17 +55,18 @@ def calibrate(motor, m, direction):
         time.sleep(0.1)
 
     # loops until the switch is triggered
+    last_motion = time.time()
     try:
         while True:
-            if pot.direction[motor] != 0:
+
+            print(pot.direction[motor], direction)
+            if pot.direction[motor] == direction:
                 last_motion = time.time()
             # no movement detected for 10 seconds
             elif time.time() >= last_motion + 5:
                 logging.warning(
-                    "No movement detected from motor {motor}."
+                    f"{motor} motor not moving in intended direction."
                 )
-                break
-            if pot.direction[motor] == -1*direction:
                 break
             v = pot.read_volts(motor=motor)
             m.logger.info(f"{v=:.3f}")
