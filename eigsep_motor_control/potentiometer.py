@@ -32,7 +32,7 @@ class Potentiometer:
         self.POT_ZERO_THRESHOLD = 0.0015
 
         # voltage measurements (az, alt)
-        size = 3  # number of measurements to store XXX
+        size = 5  # number of measurements to store XXX
         self.volts = np.zeros((size, 2))
         self.reset_volt_readings()
 

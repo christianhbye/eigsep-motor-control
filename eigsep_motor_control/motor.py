@@ -13,6 +13,8 @@ MOTOR_ID = {"az": 0, "alt": 1}
 MIN_SPEED = {"pololu": -480, "qwiic": -255, "dummy": -250}
 MAX_SPEED = {"pololu": 480, "qwiic": 254, "dummy": 250}
 
+#XXX alt motor is wired with opposite polarity so being reversed in 
+# motor.set+velocoty
 
 class Motor:
     def __init__(self, logger=None):
@@ -108,7 +110,7 @@ class QwiicMotor(Motor, QwiicScmd):
 
     def set_velocity(self, az_vel, alt_vel):
         """Sets the velocity of each motor."""
-        self.velocities = {"az": az_vel, "alt": alt_vel}
+        self.velocities = {"az": az_vel, "alt": -alt_vel}  #XXX
         for m, v in self.velocities.items():
             if v < self.MIN_SPEED:
                 v = self.MIN_SPEED
@@ -181,7 +183,7 @@ class PololuMotor(Motor):
 
     def set_velocity(self, az_vel, alt_vel):
         """Sets the velocity of each motor."""
-        self.velocities = {"az": az_vel, "alt": alt_vel}
+        self.velocities = {"az": az_vel, "alt": -alt_vel}  #XXX
         for m, v in self.velocities.items():
             if v < self.MIN_SPEED:
                 v = self.MIN_SPEED
