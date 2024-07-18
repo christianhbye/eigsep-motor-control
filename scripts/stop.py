@@ -1,4 +1,4 @@
-from eigsep_motor_control import Motor
+from eigsep_motor_control import PololuMotor
 
-motor = Motor()
+motor = PololuMotor()
 motor.stop(motors=["az", "alt"])
