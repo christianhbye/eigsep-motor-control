@@ -56,48 +56,26 @@ def calibrate(motor, m, direction):
 
     # loops until the switch is triggered
     last_motion = time.time()
-    try:
-        while True:
-
-            print(pot.direction[motor], direction)
-            if pot.direction[motor] == direction:
-                last_motion = time.time()
-            # no movement detected for 10 seconds
-            elif time.time() >= last_motion + 5:
-                logging.warning(
-                    f"{motor} motor not moving in intended direction."
-                )
-                break
-            v = pot.read_volts(motor=motor)
-            m.logger.info(f"{v=:.3f}")
-            time.sleep(0.1)
-    except KeyboardInterrupt:
-        m.logger.warning("Interrupting.")
-        m.stop()
+    while pot.direction[motor] == direction:
+        print(pot.direction[motor], direction)
+        v = pot.read_volts(motor=motor)
+        m.logger.info(f"{v=:.3f}")
+        time.sleep(0.1)
     # get the extremum pot voltage (max if forward, min if reverse)
     vm = np.max(np.abs(pot.volts[:, emc.motor.MOTOR_ID[motor]]))
-    m.logger.warning(f"Extremum voltage: {vm:.3f}")
-    # now: either the pot is stuck or the switch is triggered
-    # this loops runs as long as the pot is stuck
-    stuck_t0 = time.time()
-    try:
-        while pot.direction[motor] == 0:
-            v = pot.read_volts(motor=motor)
-            m.logger.info(f"{v=:.3f}")
-            time.sleep(0.01)
-        stuck_time = time.time() - stuck_t0
-        m.logger.info(f"Pot stuck for {stuck_time} seconds")
-        m.logger.warning("Reverse until switch is released.")
-        while pot.direction[motor] == -direction:
-            v = pot.read_volts(motor=motor)
-            m.logger.info(f"{v=:.3f}")
-            time.sleep(0.01)
-    except KeyboardInterrupt:
-        m.logger.warning("Interrupting.")
-        m.stop()
+    m.logger.info(f"Extremum voltage: {vm:.3f}")
+    while pot.direction[motor] == 0:  # pot stuck
+        v = pot.read_volts(motor=motor)
+        m.logger.info(f"{v=:.3f}")
+        time.sleep(0.01)
+    m.logger.info("Reverse until switch is released.")
+    while pot.direction[motor] == -direction:
+        v = pot.read_volts(motor=motor)
+        m.logger.info(f"{v=:.3f}")
+        time.sleep(0.01)
 
-    m.stop()
-    return vm, stuck_time >= 0.01
+    m.stop()  # stop in attacking mode
+    return vm
 
 
 if __name__ == "__main__":
@@ -120,6 +98,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    DELTA = 0.1  # diff between pot limits and hard limit
+
     motors = []
     if args.az:
         motors.append("az")
@@ -138,25 +118,15 @@ if __name__ == "__main__":
     path = Path(__file__).parent.parent / "eigsep_motor_control" / "config.yaml"
     with open(path, "r") as f:
         config = yaml.safe_load(f)
-        volt_range = config["real_volt_range"]
+        volt_range = config["volt_range"]
     for motor in motors:
         # voltage difference between min and max pot voltage
         vdiff = volt_range[motor][1] - volt_range[motor][0]
         logger.info(f"Calibrating {motor} potentiometer.")
-        vmax, stuck = calibrate(motor, m, 1)
-        if not stuck:
-            logger.info("Didn't get pot stuck, calibrate opposite direction.")
-            vmin, stuck = calibrate(motor, m, -1)
-            if not stuck:
-                raise RuntimeError("Calibration unsuccessful.")
-            vmax = vmin + vdiff
-            logger.info(f"Min voltage: {vmin:.3f}, max voltage: {vmax:.3f}")
-        else:
-            logger.info("Pot was stuck, not calibrating opposite direction.")
-            vmin = vmax - vdiff
-            logger.info(f"Min voltage: {vmin:.3f}, max voltage: {vmax:.3f}")
-        volt_range[motor] = [float(vmin), float(vmax)]
-    config["real_volt_range"] = volt_range
+        vmax = calibrate(motor, m, 1)
+        vmin = calibrate(motor, m, -1)
+        volt_range[motor] = [float(vmin)+DELTA, float(vmax)-DELTA]
+    config["volt_range"] = volt_range
     with open(path, "w") as f:
         yaml.safe_dump(config, f)
     logger.warning(
