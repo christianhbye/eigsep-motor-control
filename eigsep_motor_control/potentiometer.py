@@ -28,7 +28,7 @@ class Potentiometer:
         path = Path(__file__).parent / "config.yaml"
         with open(path, "r") as f:
             config = yaml.safe_load(f)
-        self.VOLT_RANGE = config["real_volt_range"]
+        self.VOLT_RANGE = config["volt_range"]
         self.POT_ZERO_THRESHOLD = 0.0015
 
         # voltage measurements (az, alt)
@@ -198,7 +198,7 @@ class Potentiometer:
         while True:
             for m, event in zip(names, events):
                 v = self.read_volts(motor=m)
-                print(f"{m}: {v:.3f} V ")
+                logging.info(f"{m}: {v:.3f} V ")
                 trigger = self._trigger_reverse(m, v)
                 if trigger:
                     event.set()
